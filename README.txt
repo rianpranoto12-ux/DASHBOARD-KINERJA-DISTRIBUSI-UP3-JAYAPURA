@@ -18,3 +18,20 @@ Sumber: Realisasi Dashboard Kinerja Distribusi UP3 Jayapura.xlsx.
   sesuai satuan kontrak kinerja.
 - Switching, penyerapan investasi, dan penyerapan operasi tetap dapat
   dilihat sebagai indikator dengan status Belum ada data.
+
+IMPOR, EKSPOR, DAN PENCAPAIAN
+- Klik Impor data untuk mengunggah XLSX/CSV atau memasukkan tautan Google
+  Sheets, CSV, atau XLSX yang dapat diakses browser. Jika akses tautan
+  dibatasi, unduh spreadsheet dan unggah filenya.
+- Gunakan Template_Impor_UP3_Jayapura_2026.csv. Untuk Excel, buka template,
+  isi target/realisasi, simpan sebagai .xlsx dan gunakan tab Data atau
+  lembar pertama. Pertahankan periode YYYY-MM sebagai teks.
+- Kolom indikator, satuan, pencapaian_%, dan status bersifat informatif.
+  Dashboard menghitung pencapaian dan status dari target dan realisasi.
+  Sel angka kosong mempertahankan angka sebelumnya. Nilai nol diisi 0.
+- Data impor tersimpan di browser. Ekspor CSV mengunduh seluruh unit,
+  periode, dan indikator, termasuk perubahan lokal.
+- Pencapaian mengikuti tab PENCAPAIAN KINERJA, termasuk polaritas,
+  perlakuan nol, dan rumus Range untuk RKAP. Kolom Target menampilkan
+  angka target periode. Baik >=100%, Hati-hati >=95% dan <100%,
+  Masalah <95%. Data atau target kosong tidak dinilai.
