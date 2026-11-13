@@ -41,3 +41,43 @@ TAMPILAN KINERJA PER ULP
   menampilkan seluruh 18 indikator. Klik nama indikator untuk membuka tren.
 - Ikon hijau berarti Baik, kuning Hati-hati, merah Masalah, dan abu-abu
   belum dinilai. Judul, filter dan menu tetap terlihat saat isi digulir.
+
+Ikon status dan persentase ditampilkan berdampingan di kolom Pencapaian.
+
+KINERJA DISTRIBUSI DETAIL
+- Pilih Data aset, Grafik per ULP, Detail gangguan, Penyebab SAIDI/SAIFI/ENS,
+  atau Peta ULP. Pilih bulan dan unit pada filter utama.
+- JTM, JTR, dan GD awal diambil dari Sheet5 pada workbook sumber. Nilai kosong
+  berarti bulan atau aset tersebut belum memiliki isian yang bisa dipakai.
+- Grafik per ULP menampilkan seluruh KPI, termasuk rating negatif, gangguan
+  Recloser/LBS, WO selesai, dan SLA kualitas. Nilai KPI diisi lewat template
+  Kinerja. Rincian gangguan adalah register terpisah dan tidak mengisi KPI
+  otomatis. Samakan basis periode sebelum merekonsiliasi jumlah.
+- Peta memerlukan koneksi ke OpenStreetMap untuk peta dasar. Penanda adalah
+  pusat lokalitas sebagai acuan. Pilih indikator untuk melihat capaian ULP.
+
+CARA MENGISI TEMPLATE
+1. Di menu Impor data, pilih jenis data lalu Unduh template CSV. Semua
+   template juga disertakan dalam ZIP. Buka CSV di Excel atau Google Sheets.
+2. Periode ditulis sebagai teks YYYY-MM, tahun 2026. Isi nama unit sesuai
+   pilihan dashboard. Angka memakai titik atau koma desimal tanpa pemisah
+   ribuan. Masukkan 0 hanya jika data yang tercatat benar-benar nol.
+3. Untuk aset, isi satu baris per periode dan unit. Kolom kosong
+   mempertahankan nilai aset yang sudah ada.
+4. Untuk gangguan, gunakan ID unik per periode dan unit. Kolom aset menerima
+   Penyulang, Trafo, Kubikel, Recloser, LBS, atau LBS Threeway. Isi nama aset,
+   penyebab, dan jumlah. Untuk Penyulang pilih Temporary atau Permanent.
+   Isi merek dan rating teknis jika tersedia, misalnya 630 A atau 160 kVA.
+5. Untuk penyebab, pilih SAIDI, SAIFI, atau ENS. Isi kontribusi dalam
+   menit/pelanggan, kali/pelanggan, atau MWh, sesuai indikator. Pilih
+   Terencana, Tidak terencana, Emergency, atau Eksternal. Untuk kategori
+   pemadaman Eksternal isi sumber KIT, Transmisi, atau GI. Pilih kelompok
+   penyebab Internal atau Eksternal secara terpisah.
+6. Kode internal: I1 Komponen JTM, I2 Peralatan JTM, I3 Gardu, I4 Tiang.
+   Kode eksternal: E1 Pohon, E2 Bencana Alam, E3 Hewan/Pihak ke-3,
+   E4 Layangan/Benda Asing. Isian penyebab bebas bisa memuat material,
+   petir, atau rincian lain sesuai kejadian.
+7. Simpan sebagai CSV/XLSX, atau gunakan tautan spreadsheet yang bisa dibaca
+   browser. Pilih jenis impor yang sama. Untuk XLSX, nama tab yang dibaca
+   adalah Kinerja, Aset, Gangguan, atau Penyebab, dengan fallback lembar
+   pertama. Impor dan ekspor dilakukan per jenis data.
