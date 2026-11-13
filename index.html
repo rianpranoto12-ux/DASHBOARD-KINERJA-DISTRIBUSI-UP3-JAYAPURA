@@ -36,6 +36,13 @@ main#content{flex:1;min-height:0;max-width:none;width:100%;overflow:auto;margin:
 .detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:10px;margin-bottom:10px}.detail-totals{padding:10px;border:1px solid var(--line);border-radius:8px}.detail-totals h3{font-size:13px;margin:0 0 6px}.detail-totals>div{display:grid;grid-template-columns:1.4fr 1fr auto;align-items:center;gap:6px;margin:5px 0}.detail-totals progress{width:100%;accent-color:var(--accent)}.detail-chart{max-width:920px}
 .map-frame{width:100%;min-width:700px;max-width:1080px;aspect-ratio:9/4;position:relative;overflow:hidden;background:#deedf0}.map-frame img{position:absolute;width:28.44445%;height:64%;pointer-events:none}.map-frame svg{position:absolute;width:100%;height:100%;pointer-events:none;stroke:#234656;fill:#267d76}.map-pin{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;box-shadow:0 1px 4px #132c4150}
 @media print{.map-pin{display:block}.detail-filters{display:none}}
+
+#mapPage .map-frame{min-width:1050px;max-width:1340px}
+.map-kpis{width:218px;padding:7px 9px;text-align:left;background:#fff;border-color:#7193a3;white-space:normal}
+.map-kpis>strong{display:block;border-bottom:1px solid var(--line);padding-bottom:4px;margin-bottom:3px;font-size:12px}
+.map-metric{display:flex;justify-content:space-between;gap:5px;align-items:center;font-size:11px;margin-top:3px}
+.map-metric>span:last-child{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.map-metric .status-icon{width:15px;height:15px;font-size:11px}
 </style>
 </head><body>
 <header><strong>PLN <span>UP3 JAYAPURA</span></strong><span>Jaringan dan Konstruksi</span></header>
@@ -43,7 +50,7 @@ main#content{flex:1;min-height:0;max-width:none;width:100%;overflow:auto;margin:
 <div class="dashboard-top">
 <section class="hero"><div><p class="label">LAPORAN KINERJA · 2026</p><h1>Kinerja Distribusi</h1><p>Target, realisasi, dan tren per unit</p></div><strong id="periodLabel"></strong></section>
 <div class="filters"><label>Unit<select id="unit"></select></label><label>Periode<select id="month"></select></label><label>Jenis grafik<select id="type"><option value="line">Garis</option><option value="bar">Batang</option><option value="dot">Titik</option></select></label><button id="import">Impor data</button><button id="export">Ekspor CSV</button><button id="print">Cetak / PDF</button></div>
-<nav id="pages" aria-label="Menu dashboard"><button data-page="summary" aria-pressed="true">Ringkasan kinerja</button><button data-page="ulp" aria-pressed="false">Kinerja per ULP</button><button data-page="detail" aria-pressed="false">Kinerja Distribusi Detail</button></nav>
+<nav id="pages" aria-label="Menu dashboard"><button data-page="summary" aria-pressed="true">Ringkasan kinerja</button><button data-page="ulp" aria-pressed="false">Kinerja per ULP</button><button data-page="detail" aria-pressed="false">Kinerja Distribusi Detail</button><button data-page="map" aria-pressed="false">Peta ULP</button></nav>
 </div>
 <main id="content" tabindex="0" aria-label="Isi dashboard">
 <p id="notice" role="status"></p>
@@ -59,6 +66,7 @@ main#content{flex:1;min-height:0;max-width:none;width:100%;overflow:auto;margin:
 <div class="scroll"><table class="ulp-table"><thead><tr><th scope="col">Indikator</th><th scope="col">Satuan</th><th scope="col">Target</th><th scope="col">Realisasi</th><th scope="col">Pencapaian</th></tr></thead><tbody id="ulpRows"></tbody></table></div>
 </section>
 <section id="detailPage" class="panel" hidden><div class="detail-head"><h2>Kinerja Distribusi Detail</h2><button id="detailExport">Ekspor data detail</button></div><nav id="detailTabs" aria-label="Menu distribusi detail"></nav><div id="detailBody"></div></section>
+<section id="mapPage" class="panel" hidden><h2>Peta Kinerja ULP</h2><div id="mapBody"></div></section>
 <footer>Sumber data <strong>Realisasi Dashboard Kinerja Distribusi UP3 Jayapura.xlsx</strong>. Data awal memuat realisasi sampai Oktober 2026. Tanda — menunjukkan nilai yang belum tersedia.</footer>
 </main>
 </div>
@@ -146,6 +154,7 @@ function changePage(next){
  $('summaryPage').hidden=page!=='summary';
  $('ulpPage').hidden=page!=='ulp';
  $('detailPage').hidden=page!=='detail';
+ $('mapPage').hidden=page!=='map';
  $('content').scrollTop=0;
  for(const b of $('pages').querySelectorAll('button'))b.setAttribute('aria-pressed',String(b.dataset.page===page));
  render();
@@ -199,6 +208,7 @@ function render(){
  $('periodLabel').textContent=months[month()-1]+' 2026 · '+unit();
  if(page==='ulp'){renderUlp();return}
  if(page==='detail'){renderDetail();return}
+ if(page==='map'){$('mapBody').innerHTML=renderUlpMap();return}
  $('groups').innerHTML=dataset.groups.map(([name],i)=>'<button data-group="'+i+'" aria-pressed="'+(i===group)+'">'+name+'</button>').join('');
  $('kpis').innerHTML=items.map(([k,name,satuan])=>{
   const [t,a]=values(unit(),month(),k);
@@ -226,8 +236,7 @@ const detailKinds={
  asset:{label:'Data aset',sheet:'Aset',fields:['periode','unit','penyulang','jtm_kms','jtr_kms','gd','recloser','lbs','lbs_threeway']},
  performance:{label:'Grafik per ULP',sheet:'Kinerja',fields:columns},
  fault:{label:'Detail gangguan',sheet:'Gangguan',fields:['periode','unit','id','aset','nama_aset','rating','merek','jenis_gangguan','kode_penyebab','penyebab','jumlah']},
- cause:{label:'Penyebab SAIDI, SAIFI & ENS',sheet:'Penyebab',fields:['periode','unit','id','indikator','kategori_pemadaman','sumber_eksternal','kelompok_penyebab','kode_penyebab','penyebab','kontribusi']},
- map:{label:'Peta ULP'}
+ cause:{label:'Penyebab SAIDI, SAIFI & ENS',sheet:'Penyebab',fields:['periode','unit','id','indikator','kategori_pemadaman','sumber_eksternal','kelompok_penyebab','kode_penyebab','penyebab','kontribusi']}
 };
 const faultCodes={I1:'Komponen JTM',I2:'Peralatan JTM',I3:'Gardu',I4:'Tiang',E1:'Pohon',E2:'Bencana Alam',E3:'Hewan/Pihak ke-3',E4:'Layangan/Benda Asing'};
 const assets=['Penyulang','Trafo','Kubikel','Recloser','LBS','LBS Threeway'];
@@ -325,7 +334,6 @@ function renderDetail(){
   body.innerHTML='<div class="detail-filters">'+selectDetail('kpi','Indikator',Array.from(meta.values(),r=>[r[0],r[1]]))+'</div><p class="muted">'+ehtml(metaRow[2])+' · Hijau kebiruan: realisasi · Biru: target</p><div class="detail-chart scroll">'+chart(points)+'</div><div class="scroll"><table><thead><tr><th>ULP</th><th>Target</th><th>Realisasi</th><th>Pencapaian</th></tr></thead><tbody>'+points.map(p=>'<tr><td>'+p.label+'</td><td>'+fmt(p.values[0])+'</td><td>'+fmt(p.values[1])+'</td>'+achievementCell(k,...p.values)+'</tr>').join('')+'</tbody></table></div>';
   return;
  }
- if(detailTab==='map'){body.innerHTML=renderDetailMap();return}
  const f=detailFilters;
  if(detailTab==='fault'){
   const rows=detailRows('fault').filter(r=>(!f.asset||r.aset===f.asset)&&(!f.kind||r.jenis_gangguan===f.kind)&&r.merek.toLowerCase().includes(f.brand.toLowerCase())&&r.rating.toLowerCase().includes(f.rating.toLowerCase()));
@@ -350,10 +358,11 @@ function assetValues(u,m){
  return {...assetBase[k],...detailOverrides.asset[k]};
 }
 const places=[
- [-2.5333,140.7,35,-26],[-2.5964,140.6324,50,20],[-2.5684,140.5052,-48,24],
- [-2.9028,140.7657,12,23],[-2.5791,140.1495,-20,23],[-1.8547,138.7493,0,-21]
+ [-2.5333,140.7,790,70],[-2.5964,140.6324,790,215],[-2.5684,140.5052,580,75],
+ [-2.9028,140.7657,790,342],[-2.5791,140.1495,540,320],[-1.8547,138.7493,123,78]
 ];
-function renderDetailMap(){
+const mapMetrics=[['sales','Penjualan'],['loss','Susut'],['saidi','SAIDI'],['tm','Gangguan TM']];
+function renderUlpMap(){
  const world=256*2**9;
  const xy=(lat,lon)=>[(lon+180)/360*world,(1-Math.asinh(Math.tan(lat*Math.PI/180))/Math.PI)/2*world];
  const center=xy(-2.36,139.77),left=center[0]-450,top=center[1]-200;
@@ -361,13 +370,17 @@ function renderDetailMap(){
  for(let x=Math.floor(left/256);x<=Math.floor((left+899)/256);x++)for(let y=Math.floor(top/256);y<=Math.floor((top+399)/256);y++){
   tiles+='<img alt="" loading="lazy" src="https://tile.openstreetmap.org/9/'+x+'/'+y+'.png" style="left:'+((x*256-left)/9)+'%;top:'+((y*256-top)/4)+'%">';
  }
- const k=detailFilters.kpi;
- const pins=places.map(([lat,lon,dx,dy],i)=>{
-  const [px,py]=xy(lat,lon),x=px-left,y=py-top,u=dataset.units[i+1],pair=values(u,month(),k);
-  lines+='<line x1="'+x+'" y1="'+y+'" x2="'+(x+dx)+'" y2="'+(y+dy)+'"/><circle cx="'+x+'" cy="'+y+'" r="5"/>';
-  return '<button class="map-pin" data-map-unit="'+(i+1)+'" style="left:'+((x+dx)/9)+'%;top:'+((y+dy)/4)+'%">'+icon(...status(k,...pair))+' '+u.slice(4)+' · '+fmt(pair[1])+'</button>';
+ const cards=places.map(([lat,lon,cx,cy],i)=>{
+  const [px,py]=xy(lat,lon),x=px-left,y=py-top,u=dataset.units[i+1];
+  lines+='<line x1="'+x+'" y1="'+y+'" x2="'+cx+'" y2="'+cy+'"/><circle cx="'+x+'" cy="'+y+'" r="5"/>';
+  const metrics=mapMetrics.map(([k,label])=>{
+   const [target,actual]=values(u,month(),k),[,name,satuan]=meta.get(k);
+   const value=actual==null?'—':fmt(actual)+(satuan==='%'?'%':' '+satuan);
+   return '<span class="map-metric" title="'+ehtml(name)+' · Target '+fmt(target)+' · Pencapaian '+percent(achievement(k,target,actual))+'"><span>'+label+'</span><span><b>'+value+'</b> '+icon(...status(k,target,actual))+'</span></span>';
+  }).join('');
+  return '<button class="map-pin map-kpis" data-map-unit="'+(i+1)+'" style="left:'+(cx/9)+'%;top:'+(cy/4)+'%"><strong>'+u+'</strong>'+metrics+'</button>';
  }).join('');
- return '<div class="detail-filters">'+selectDetail('kpi','Indikator',Array.from(meta.values(),r=>[r[0],r[1]]))+'</div><p class="muted">Penanda menunjukkan pusat lokalitas. Klik ULP untuk melihat kinerjanya. Peta dasar memerlukan internet.</p><div class="scroll"><div class="map-frame">'+tiles+'<svg viewBox="0 0 900 400" aria-hidden="true">'+lines+'</svg>'+pins+'</div></div><p class="muted"><a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a></p>';
+ return '<p class="muted">Realisasi '+months[month()-1]+' 2026. Arahkan kursor ke KPI untuk melihat target dan pencapaian. Klik kartu untuk membuka kinerja ULP.</p><div class="scroll" tabindex="0" aria-label="Peta enam ULP, dapat digulir mendatar"><div class="map-frame">'+tiles+'<svg viewBox="0 0 900 400" aria-hidden="true">'+lines+'</svg>'+cards+'</div></div><p class="muted">Penanda menunjukkan pusat lokalitas. Peta dasar memerlukan internet. <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a></p>';
 }
 $('detailTabs').onclick=e=>{
  const b=e.target.closest('[data-detail-tab]');if(!b)return;
@@ -379,7 +392,7 @@ $('detailBody').onchange=e=>{
  detailFilters[k]=e.target.value;renderDetail();
  $('detailBody').querySelector('[data-detail-filter="'+k+'"]')?.focus();
 };
-$('detailBody').onclick=e=>{
+$('mapBody').onclick=e=>{
  const b=e.target.closest('[data-map-unit]');if(!b)return;
  $('unit').value=dataset.units[Number(b.dataset.mapUnit)];
  changePage('ulp');
@@ -403,7 +416,7 @@ function downloadDetail(kind,blank){
  csvDownload([schema.fields,...rows],(blank?'Template_':'Ekspor_')+schema.sheet+'_UP3_Jayapura_2026.csv');
 }
 $('detailExport').onclick=()=>{
- if(detailTab==='performance'||detailTab==='map')downloadTable(false);
+ if(detailTab==='performance')downloadTable(false);
  else downloadDetail(detailTab,false);
 };
 
