@@ -13,7 +13,8 @@ const descriptions={
  mvod:'Nilai KPI dalam persen, mengikuti satuan kontrak.',
  mttr:'Nilai KPI dalam persen, mengikuti satuan kontrak.'
 };
-let group=0, selected='sales', view='trend';
+let group=0, selected='sales', view='trend', page='summary';
+let lastUlp=dataset.units[1];
 const option=(value,label)=>'<option value="'+value+'">'+label+'</option>';
 $('unit').innerHTML=dataset.units.map(u=>option(u,u)).join('');
 $('month').innerHTML=months.map((m,i)=>option(i+1,m+' 2026')).join('');
@@ -41,6 +42,46 @@ function status(k,t,a){
  const score=achievement(k,t,a);
  return score>=100?['Baik','good']:score>=95?['Hati-hati','warn']:['Masalah','bad'];
 }
+const statusIcons={good:'✓',warn:'!',bad:'×',muted:'—'};
+function icon(label,cls){
+ return '<span class="status-icon '+cls+'" role="img" aria-label="'+label+'" title="'+label+'">'+statusIcons[cls]+'</span>';
+}
+function statusCell(k,t,a){
+ return '<td class="status-cell">'+icon(...status(k,t,a))+'</td>';
+}
+$('statusLegend').innerHTML=[['Baik','good'],['Hati-hati','warn'],['Masalah','bad'],['Belum dinilai','muted']].map(([label,cls])=>'<span>'+icon(label,cls)+' '+label+'</span>').join('');
+function renderUlp(){
+ $('ulpTitle').textContent='Kinerja '+unit()+' · '+months[month()-1]+' 2026';
+ $('ulpRows').innerHTML=dataset.groups.map(([name,items])=>'<tr class="group-row"><th scope="rowgroup" colspan="6">'+name+'</th></tr>'+items.map(([k,label,satuan])=>{
+  const [t,a]=values(unit(),month(),k);
+  return '<tr><td><button data-ulp-kpi="'+k+'" title="Buka grafik">'+label+'</button></td><td>'+satuan+'</td><td>'+fmt(t)+'</td><td><strong>'+fmt(a)+'</strong></td><td>'+percent(achievement(k,t,a))+'</td>'+statusCell(k,t,a)+'</tr>';
+ }).join('')).join('');
+}
+function changePage(next){
+ const current=unit();
+ if(current!==dataset.units[0])lastUlp=current;
+ page=next;
+ $('unit').innerHTML=(page==='ulp'?dataset.units.slice(1):dataset.units).map(u=>option(u,u)).join('');
+ $('unit').value=page==='ulp'?lastUlp:current;
+ $('summaryPage').hidden=page!=='summary';
+ $('ulpPage').hidden=page!=='ulp';
+ $('content').scrollTop=0;
+ for(const b of $('pages').querySelectorAll('button'))b.setAttribute('aria-pressed',String(b.dataset.page===page));
+ render();
+}
+$('pages').onclick=e=>{
+ const button=e.target.closest('[data-page]');
+ if(button)changePage(button.dataset.page);
+};
+$('ulpRows').onclick=e=>{
+ const button=e.target.closest('[data-ulp-kpi]');
+ if(!button)return;
+ selected=button.dataset.ulpKpi;
+ group=dataset.groups.findIndex(([,items])=>items.some(([k])=>k===selected));
+ view='trend';
+ changePage('summary');
+ $('kpis').querySelector('[aria-pressed=true]')?.focus();
+};
 function chart(points){
  const nums=points.flatMap(p=>p.values).filter(v=>v!=null);
  if(!nums.length)return '<p class="empty">Belum ada angka untuk ditampilkan pada pilihan ini.</p>';
@@ -75,10 +116,11 @@ function render(){
  const [groupTitle,items]=dataset.groups[group];
  $('groupTitle').textContent=groupTitle;
  $('periodLabel').textContent=months[month()-1]+' 2026 · '+unit();
+ if(page==='ulp'){renderUlp();return}
  $('groups').innerHTML=dataset.groups.map(([name],i)=>'<button data-group="'+i+'" aria-pressed="'+(i===group)+'">'+name+'</button>').join('');
  $('kpis').innerHTML=items.map(([k,name,satuan])=>{
-  const [t,a]=values(unit(),month(),k),[label,cls]=status(k,t,a);
-  return '<tr><td><button data-kpi="'+k+'" aria-pressed="'+(k===selected)+'">'+name+'<small>'+satuan+'</small></button></td><td>'+targetText(k,t)+'</td><td><strong>'+fmt(a)+'</strong></td><td>'+percent(achievement(k,t,a))+'</td><td class="'+cls+'">'+label+'</td></tr>';
+  const [t,a]=values(unit(),month(),k);
+  return '<tr><td><button data-kpi="'+k+'" aria-pressed="'+(k===selected)+'">'+name+'<small>'+satuan+'</small></button></td><td>'+targetText(k,t)+'</td><td><strong>'+fmt(a)+'</strong></td><td>'+percent(achievement(k,t,a))+'</td>'+statusCell(k,t,a)+'</tr>';
  }).join('');
  const [,name,satuan]=meta.get(selected);
  $('title').textContent=name;
@@ -88,7 +130,7 @@ function render(){
   dataset.units.slice(1).map(u=>({label:u,short:u.slice(4),values:values(u,month(),selected)}));
  $('axis').textContent=view==='trend'?'Bulan':'Unit';
  $('chart').innerHTML=chart(points);
- $('chartTable').innerHTML=points.map(p=>'<tr><td>'+p.label+'</td><td>'+targetText(selected,p.values[0])+'</td><td>'+fmt(p.values[1])+'</td><td>'+percent(achievement(selected,...p.values))+'</td><td class="'+status(selected,...p.values)[1]+'">'+status(selected,...p.values)[0]+'</td></tr>').join('');
+ $('chartTable').innerHTML=points.map(p=>'<tr><td>'+p.label+'</td><td>'+targetText(selected,p.values[0])+'</td><td>'+fmt(p.values[1])+'</td><td>'+percent(achievement(selected,...p.values))+'</td>'+statusCell(selected,...p.values)+'</tr>').join('');
 }
 for(const id of ['unit','month','type'])$(id).onchange=render;
 $('groups').onclick=e=>{const b=e.target.closest('[data-group]');if(b){group=Number(b.dataset.group);selected=dataset.groups[group][1][0][0];render();$('groups').querySelector('[aria-pressed=true]').focus()}};
@@ -234,6 +276,7 @@ async function importFrom(load){
   localStorage.setItem(storageKey,JSON.stringify({...overrides,...changes}));
   Object.assign(overrides,changes);
   const [u,m,k]=keys[0].split('|');
+  if(page==='ulp'&&u===dataset.units[0])changePage('summary');
   $('unit').value=u;$('month').value=m;
   group=dataset.groups.findIndex(([,items])=>items.some(([id])=>id===k));selected=k;
   render();$('importDialog').close();

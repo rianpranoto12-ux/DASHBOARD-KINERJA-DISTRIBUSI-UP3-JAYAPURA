@@ -35,3 +35,9 @@ IMPOR, EKSPOR, DAN PENCAPAIAN
   perlakuan nol, dan rumus Range untuk RKAP. Kolom Target menampilkan
   angka target periode. Baik >=100%, Hati-hati >=95% dan <100%,
   Masalah <95%. Data atau target kosong tidak dinilai.
+
+TAMPILAN KINERJA PER ULP
+- Buka menu Kinerja per ULP, pilih satu dari enam ULP dan periode. Tabel
+  menampilkan seluruh 18 indikator. Klik nama indikator untuk membuka tren.
+- Ikon hijau berarti Baik, kuning Hati-hati, merah Masalah, dan abu-abu
+  belum dinilai. Judul, filter dan menu tetap terlihat saat isi digulir.
