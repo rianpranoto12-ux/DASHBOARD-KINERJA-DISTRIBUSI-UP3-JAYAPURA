@@ -25,6 +25,12 @@ main#content{flex:1;min-height:0;max-width:none;width:100%;overflow:auto;margin:
 @media(max-width:600px){.hero p:not(.label),body>header>span,.hero .label{display:none}.hero{gap:3px 10px}.filters{gap:5px}.filters label{font-size:11px}.filters select{max-width:160px}.layout{grid-template-columns:1fr}}
 @media(max-height:480px){.hero p,body>header{display:none}.hero{padding:4px 10px}.dashboard-top{padding-top:4px}}
 @media print{body{height:auto;overflow:visible;display:block}.dashboard-shell{display:block}main#content{overflow:visible}.dashboard-top{padding:0}.panel{break-inside:auto}.ulp-table tr{break-inside:avoid}}
+
+.achievement-cell{white-space:nowrap;font-variant-numeric:tabular-nums}
+.achievement-badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 8px 3px 4px;background:#edf2f6;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.achievement-badge.good{background:#e4f4e9;color:#075c38}
+.achievement-badge.warn{background:#fff2bf;color:#684800}
+.achievement-badge.bad{background:#fbe6e7;color:#96272e}
 </style>
 </head><body>
 <header><strong>PLN <span>UP3 JAYAPURA</span></strong><span>Jaringan dan Konstruksi</span></header>
@@ -40,12 +46,12 @@ main#content{flex:1;min-height:0;max-width:none;width:100%;overflow:auto;margin:
 <div id="summaryPage">
 <nav id="groups" aria-label="Kelompok indikator"></nav>
 <section class="layout">
-<section class="panel"><h2 id="groupTitle"></h2><div class="scroll"><table><thead><tr><th>Indikator</th><th>Target</th><th>Realisasi</th><th>Pencapaian</th><th>Status</th></tr></thead><tbody id="kpis"></tbody></table></div></section>
-<section class="panel" aria-live="polite"><h2 id="title"></h2><p id="basis" class="muted"></p><div class="switch" id="views"><button data-view="trend">Tren bulanan</button><button data-view="compare">Perbandingan ULP</button></div><div class="legend"><span><i></i>Realisasi</span><span><i></i>Target</span></div><div id="chart" class="scroll"></div><div class="scroll"><table><thead><tr><th id="axis"></th><th>Target</th><th>Realisasi</th><th>Pencapaian</th><th>Status</th></tr></thead><tbody id="chartTable"></tbody></table></div></section>
+<section class="panel"><h2 id="groupTitle"></h2><div class="scroll"><table><thead><tr><th>Indikator</th><th>Target</th><th>Realisasi</th><th>Pencapaian</th></tr></thead><tbody id="kpis"></tbody></table></div></section>
+<section class="panel" aria-live="polite"><h2 id="title"></h2><p id="basis" class="muted"></p><div class="switch" id="views"><button data-view="trend">Tren bulanan</button><button data-view="compare">Perbandingan ULP</button></div><div class="legend"><span><i></i>Realisasi</span><span><i></i>Target</span></div><div id="chart" class="scroll"></div><div class="scroll"><table><thead><tr><th id="axis"></th><th>Target</th><th>Realisasi</th><th>Pencapaian</th></tr></thead><tbody id="chartTable"></tbody></table></div></section>
 </section></div>
 <section id="ulpPage" class="panel" hidden>
 <h2 id="ulpTitle">Kinerja per ULP</h2>
-<div class="scroll"><table class="ulp-table"><thead><tr><th scope="col">Indikator</th><th scope="col">Satuan</th><th scope="col">Target</th><th scope="col">Realisasi</th><th scope="col">Pencapaian</th><th scope="col">Status</th></tr></thead><tbody id="ulpRows"></tbody></table></div>
+<div class="scroll"><table class="ulp-table"><thead><tr><th scope="col">Indikator</th><th scope="col">Satuan</th><th scope="col">Target</th><th scope="col">Realisasi</th><th scope="col">Pencapaian</th></tr></thead><tbody id="ulpRows"></tbody></table></div>
 </section>
 <footer>Sumber data <strong>Realisasi Dashboard Kinerja Distribusi UP3 Jayapura.xlsx</strong>. Data awal memuat realisasi sampai Oktober 2026. Tanda — menunjukkan nilai yang belum tersedia.</footer>
 </main>
@@ -111,15 +117,16 @@ const statusIcons={good:'✓',warn:'!',bad:'×',muted:'—'};
 function icon(label,cls){
  return '<span class="status-icon '+cls+'" role="img" aria-label="'+label+'" title="'+label+'">'+statusIcons[cls]+'</span>';
 }
-function statusCell(k,t,a){
- return '<td class="status-cell">'+icon(...status(k,t,a))+'</td>';
+function achievementCell(k,t,a){
+ const [label,cls]=status(k,t,a);
+ return '<td class="achievement-cell"><span class="achievement-badge '+cls+'">'+icon(label,cls)+'<strong>'+percent(achievement(k,t,a))+'</strong></span></td>';
 }
 $('statusLegend').innerHTML=[['Baik','good'],['Hati-hati','warn'],['Masalah','bad'],['Belum dinilai','muted']].map(([label,cls])=>'<span>'+icon(label,cls)+' '+label+'</span>').join('');
 function renderUlp(){
  $('ulpTitle').textContent='Kinerja '+unit()+' · '+months[month()-1]+' 2026';
- $('ulpRows').innerHTML=dataset.groups.map(([name,items])=>'<tr class="group-row"><th scope="rowgroup" colspan="6">'+name+'</th></tr>'+items.map(([k,label,satuan])=>{
+ $('ulpRows').innerHTML=dataset.groups.map(([name,items])=>'<tr class="group-row"><th scope="rowgroup" colspan="5">'+name+'</th></tr>'+items.map(([k,label,satuan])=>{
   const [t,a]=values(unit(),month(),k);
-  return '<tr><td><button data-ulp-kpi="'+k+'" title="Buka grafik">'+label+'</button></td><td>'+satuan+'</td><td>'+fmt(t)+'</td><td><strong>'+fmt(a)+'</strong></td><td>'+percent(achievement(k,t,a))+'</td>'+statusCell(k,t,a)+'</tr>';
+  return '<tr><td><button data-ulp-kpi="'+k+'" title="Buka grafik">'+label+'</button></td><td>'+satuan+'</td><td>'+fmt(t)+'</td><td><strong>'+fmt(a)+'</strong></td>'+achievementCell(k,t,a)+'</tr>';
  }).join('')).join('');
 }
 function changePage(next){
@@ -185,7 +192,7 @@ function render(){
  $('groups').innerHTML=dataset.groups.map(([name],i)=>'<button data-group="'+i+'" aria-pressed="'+(i===group)+'">'+name+'</button>').join('');
  $('kpis').innerHTML=items.map(([k,name,satuan])=>{
   const [t,a]=values(unit(),month(),k);
-  return '<tr><td><button data-kpi="'+k+'" aria-pressed="'+(k===selected)+'">'+name+'<small>'+satuan+'</small></button></td><td>'+targetText(k,t)+'</td><td><strong>'+fmt(a)+'</strong></td><td>'+percent(achievement(k,t,a))+'</td>'+statusCell(k,t,a)+'</tr>';
+  return '<tr><td><button data-kpi="'+k+'" aria-pressed="'+(k===selected)+'">'+name+'<small>'+satuan+'</small></button></td><td>'+targetText(k,t)+'</td><td><strong>'+fmt(a)+'</strong></td>'+achievementCell(k,t,a)+'</tr>';
  }).join('');
  const [,name,satuan]=meta.get(selected);
  $('title').textContent=name;
@@ -195,7 +202,7 @@ function render(){
   dataset.units.slice(1).map(u=>({label:u,short:u.slice(4),values:values(u,month(),selected)}));
  $('axis').textContent=view==='trend'?'Bulan':'Unit';
  $('chart').innerHTML=chart(points);
- $('chartTable').innerHTML=points.map(p=>'<tr><td>'+p.label+'</td><td>'+targetText(selected,p.values[0])+'</td><td>'+fmt(p.values[1])+'</td><td>'+percent(achievement(selected,...p.values))+'</td>'+statusCell(selected,...p.values)+'</tr>').join('');
+ $('chartTable').innerHTML=points.map(p=>'<tr><td>'+p.label+'</td><td>'+targetText(selected,p.values[0])+'</td><td>'+fmt(p.values[1])+'</td>'+achievementCell(selected,...p.values)+'</tr>').join('');
 }
 for(const id of ['unit','month','type'])$(id).onchange=render;
 $('groups').onclick=e=>{const b=e.target.closest('[data-group]');if(b){group=Number(b.dataset.group);selected=dataset.groups[group][1][0][0];render();$('groups').querySelector('[aria-pressed=true]').focus()}};
