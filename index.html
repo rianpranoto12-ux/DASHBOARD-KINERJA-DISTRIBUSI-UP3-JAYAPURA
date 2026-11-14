@@ -60,21 +60,38 @@ main#content{flex:1;min-height:0;max-width:none;width:100%;overflow:auto;margin:
 .presentation #chart svg{max-height:37vh}
 .presentation .layout{gap:14px}
 @media print{#slideControls{display:none!important}.presentation main#content{background:white}}
+
+.panel-bar{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:4px 0}
+.panel-bar #slideControls:not([hidden]){border:0;padding:0}
+.compact-context{font-size:12px;font-weight:650;color:var(--muted)}
+body.panel-collapsed>header{display:none}
+.panel-collapsed .dashboard-top{padding-top:0}
+.panel-collapsed .slide-verbose{display:none}
+.panel-collapsed #slideControls label{font-size:0}
+.panel-collapsed #slideControls select{font-size:12px;max-width:min(230px,58vw)}
+.panel-collapsed #slideControls button{font-size:12px}
+@media print{.panel-bar{display:none!important}}
 </style>
 </head><body>
 <header><strong>PLN <span>UP3 JAYAPURA</span></strong><span>Jaringan dan Konstruksi</span></header>
 <div class="dashboard-shell">
 <div class="dashboard-top">
+<div id="panelExpanded">
 <section class="hero"><div><p class="label">LAPORAN KINERJA · 2026</p><h1>Kinerja Distribusi</h1><p>Target, realisasi, dan tren per unit</p></div><strong id="periodLabel"></strong></section>
 <div class="filters"><label>Unit<select id="unit"></select></label><label>Periode<select id="month"></select></label><label>Jenis grafik<select id="type"><option value="line">Garis</option><option value="bar">Batang</option><option value="dot">Titik</option></select></label><button id="import">Impor data</button><button id="export">Ekspor CSV</button><button id="present" aria-pressed="false">Mode paparan</button><button id="print">Cetak / PDF</button></div>
-<nav id="pages" aria-label="Menu dashboard"><button data-page="summary" aria-pressed="true">Ringkasan kinerja</button><button data-page="ulp" aria-pressed="false">Kinerja per ULP</button><button data-page="detail" aria-pressed="false">Kinerja Distribusi Detail</button><button data-page="map" aria-pressed="false">Peta ULP</button></nav>
+<nav id="pages" aria-label="Menu dashboard"><button data-page="summary" aria-pressed="true">Ringkasan kinerja</button><button data-page="ulp" aria-pressed="false">Kinerja per ULP</button><button data-page="detail" aria-pressed="false">Kinerja Distribusi Detail</button><button data-page="map" aria-pressed="false">Peta ULP</button></nav></div>
+<div class="panel-bar">
+<button id="panelToggle" type="button" aria-controls="panelExpanded" aria-expanded="true">Ciutkan panel</button>
+<span id="compactContext" class="compact-context" hidden></span>
+
 <div id="slideControls" hidden aria-label="Navigasi paparan">
-<button id="slidePrev" type="button" aria-label="Slide sebelumnya">← Sebelumnya</button>
+<button id="slidePrev" type="button" aria-label="Slide sebelumnya">←<span class="slide-verbose"> Sebelumnya</span></button>
 <label>Slide <select id="slidePicker"></select></label>
 <output id="slideCount" aria-live="polite"></output>
-<button id="slideNext" type="button" aria-label="Slide berikutnya">Berikutnya →</button>
+<button id="slideNext" type="button" aria-label="Slide berikutnya"><span class="slide-verbose">Berikutnya </span>→</button>
 <button id="slideFull" type="button">Layar penuh</button>
 <span id="slideFeedback" class="muted" role="status"></span>
+</div>
 </div>
 </div>
 <main id="content" tabindex="0" aria-label="Isi dashboard">
@@ -232,6 +249,7 @@ function render(){
  const [groupTitle,items]=dataset.groups[group];
  $('groupTitle').textContent=groupTitle;
  $('periodLabel').textContent=months[month()-1]+' 2026 · '+unit();
+ $('compactContext').textContent=$('periodLabel').textContent;
  if(page==='ulp'){renderUlp();return}
  if(page==='detail'){renderDetail();return}
  if(page==='map'){$('mapBody').innerHTML=renderUlpMap();return}
@@ -747,6 +765,16 @@ function openSlide(index){
  }
  changePage(slide.page);
 }
+let panelCollapsed=false;
+function setPanelCollapsed(collapsed){
+ panelCollapsed=collapsed;
+ $('panelExpanded').hidden=collapsed;
+ $('compactContext').hidden=!collapsed;
+ $('panelToggle').setAttribute('aria-expanded',String(!collapsed));
+ $('panelToggle').textContent=collapsed?'Buka panel':'Ciutkan panel';
+ document.body.classList.toggle('panel-collapsed',collapsed);
+}
+$('panelToggle').onclick=()=>setPanelCollapsed(!panelCollapsed);
 function togglePresentation(){
  presenting=!presenting;
  document.body.classList.toggle('presentation',presenting);
@@ -754,7 +782,7 @@ function togglePresentation(){
  $('present').setAttribute('aria-pressed',String(presenting));
  $('present').textContent=presenting?'Keluar paparan':'Mode paparan';
  if(!presenting&&document.fullscreenElement)document.exitFullscreen?.().catch(()=>{});
- if(!presenting)$('slideFeedback').textContent='';
+ if(!presenting){$('slideFeedback').textContent='';setPanelCollapsed(false)}
  syncPresentation();
 }
 $('present').onclick=togglePresentation;
@@ -774,7 +802,9 @@ document.addEventListener('fullscreenchange',()=>{
  $('slideFull').textContent=document.fullscreenElement?'Keluar layar penuh':'Layar penuh';
 });
 document.addEventListener('keydown',event=>{
- if(!presenting||$('importDialog').open||event.ctrlKey||event.altKey||event.metaKey||event.shiftKey||event.target?.closest?.('input,select,textarea,[contenteditable],.scroll'))return;
+ if($('importDialog').open||event.ctrlKey||event.altKey||event.metaKey||event.shiftKey||event.target?.closest?.('input,select,textarea,[contenteditable],.scroll'))return;
+ if(event.key.toLowerCase()==='m'){event.preventDefault();setPanelCollapsed(!panelCollapsed);return}
+ if(!presenting)return;
  if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight')return;
  event.preventDefault();
  openSlide(activeSlide()+(event.key==='ArrowLeft'?-1:1));
