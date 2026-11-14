@@ -67,6 +67,24 @@ body.panel-collapsed>header,.panel-collapsed #panelToggle{display:none}
 
 .panel-bar:has(#compactTitle[hidden]){display:none}
 @media print{#panelToggle,#slideFull{display:none!important}.presentation main#content{background:white}}
+
+main#content{container-type:size}
+#summaryDetail{
+ min-width:0;
+ max-height:65vh;
+ max-height:max(240px,calc(100cqh - 104px));
+ overflow-y:auto;
+ overscroll-behavior-y:contain;
+ scrollbar-gutter:stable;
+}
+#summaryDetail:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+@media(max-width:960px){
+ #summaryDetail{max-height:70vh;max-height:70cqh;overscroll-behavior-y:auto}
+}
+@media print{
+ main#content{container-type:normal}
+ #summaryDetail{max-height:none;overflow:visible;scrollbar-gutter:auto}
+}
 </style>
 </head><body>
 <header><strong>PLN <span>UP3 JAYAPURA</span></strong><span>Jaringan dan Konstruksi</span></header>
@@ -89,7 +107,7 @@ body.panel-collapsed>header,.panel-collapsed #panelToggle{display:none}
 <nav id="groups" aria-label="Kelompok indikator"></nav>
 <section class="layout">
 <section class="panel"><h2 id="groupTitle"></h2><div class="scroll"><table><thead><tr><th>Indikator</th><th>Target</th><th>Realisasi</th><th>Pencapaian</th></tr></thead><tbody id="kpis"></tbody></table></div></section>
-<section class="panel" aria-live="polite"><h2 id="title"></h2><p id="basis" class="muted"></p><div class="switch" id="views"><button data-view="trend">Tren bulanan</button><button data-view="compare">Perbandingan ULP</button></div><div class="legend"><span><i></i>Realisasi</span><span><i></i>Target</span></div><div id="chart" class="scroll"></div><div class="scroll"><table><thead><tr><th id="axis"></th><th>Target</th><th>Realisasi</th><th>Pencapaian</th></tr></thead><tbody id="chartTable"></tbody></table></div></section>
+<section class="panel" id="summaryDetail" tabindex="0" aria-labelledby="title"><h2 id="title"></h2><p id="basis" class="muted"></p><div class="switch" id="views"><button data-view="trend">Tren bulanan</button><button data-view="compare">Perbandingan ULP</button></div><div class="legend"><span><i></i>Realisasi</span><span><i></i>Target</span></div><div id="chart" class="scroll"></div><div class="scroll"><table><thead><tr><th id="axis"></th><th>Target</th><th>Realisasi</th><th>Pencapaian</th></tr></thead><tbody id="chartTable"></tbody></table></div></section>
 </section></div>
 <section id="ulpPage" class="panel" hidden>
 <h2 id="ulpTitle">Kinerja per ULP</h2>
