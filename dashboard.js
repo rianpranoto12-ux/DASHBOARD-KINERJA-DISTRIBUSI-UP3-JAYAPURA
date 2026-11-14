@@ -67,6 +67,7 @@ function changePage(next){
  $('summaryPage').hidden=page!=='summary';
  $('ulpPage').hidden=page!=='ulp';
  $('detailPage').hidden=page!=='detail';
+ $('mapPage').hidden=page!=='map';
  $('content').scrollTop=0;
  for(const b of $('pages').querySelectorAll('button'))b.setAttribute('aria-pressed',String(b.dataset.page===page));
  render();
@@ -120,6 +121,7 @@ function render(){
  $('periodLabel').textContent=months[month()-1]+' 2026 · '+unit();
  if(page==='ulp'){renderUlp();return}
  if(page==='detail'){renderDetail();return}
+ if(page==='map'){$('mapBody').innerHTML=renderUlpMap();return}
  $('groups').innerHTML=dataset.groups.map(([name],i)=>'<button data-group="'+i+'" aria-pressed="'+(i===group)+'">'+name+'</button>').join('');
  $('kpis').innerHTML=items.map(([k,name,satuan])=>{
   const [t,a]=values(unit(),month(),k);
@@ -143,12 +145,17 @@ $('print').onclick=()=>window.print();
 const columns=['periode','unit','kode_indikator','indikator','satuan','target','realisasi','pencapaian_%','status'];
 const overrides={};
 const storageKey='up3-jayapura-distribusi-2026-import';
+const pdTeams=['Regu 1','Regu 2'];
+const materialSources=['UP3 Jayapura - Distribusi','UP3 Jayapura - Niaga','UP3 Wamena','UPPK Papua'];
+const materialTypes=['MDU','Non-MDU'];
 const detailKinds={
+ pdkb:{label:'PDKB',sheet:'PDKB',fields:['periode','unit','regu','pekerjaan_titik','ens_diselamatkan_mwh']},
+ stock:{label:'Logistik',sheet:'Stok',fields:['periode','unit','sumber','kategori','kode_material','nama_material','satuan','stok']},
+ ito:{sheet:'ITO',fields:['periode','unit','target_ito','realisasi_ito']},
  asset:{label:'Data aset',sheet:'Aset',fields:['periode','unit','penyulang','jtm_kms','jtr_kms','gd','recloser','lbs','lbs_threeway']},
  performance:{label:'Grafik per ULP',sheet:'Kinerja',fields:columns},
  fault:{label:'Detail gangguan',sheet:'Gangguan',fields:['periode','unit','id','aset','nama_aset','rating','merek','jenis_gangguan','kode_penyebab','penyebab','jumlah']},
- cause:{label:'Penyebab SAIDI, SAIFI & ENS',sheet:'Penyebab',fields:['periode','unit','id','indikator','kategori_pemadaman','sumber_eksternal','kelompok_penyebab','kode_penyebab','penyebab','kontribusi']},
- map:{label:'Peta ULP'}
+ cause:{label:'Penyebab SAIDI, SAIFI & ENS',sheet:'Penyebab',fields:['periode','unit','id','indikator','kategori_pemadaman','sumber_eksternal','kelompok_penyebab','kode_penyebab','penyebab','kontribusi']}
 };
 const faultCodes={I1:'Komponen JTM',I2:'Peralatan JTM',I3:'Gardu',I4:'Tiang',E1:'Pohon',E2:'Bencana Alam',E3:'Hewan/Pihak ke-3',E4:'Layangan/Benda Asing'};
 const assets=['Penyulang','Trafo','Kubikel','Recloser','LBS','LBS Threeway'];
@@ -162,7 +169,7 @@ const extraKpis=[
 for(const row of extraKpis)meta.set(row[0],row);
 function kpiKey(u,m,k){return dataset.units.includes(u)&&Number.isInteger(m)&&m>=1&&m<=12&&meta.has(k)}
 const detailStorage='up3-distribusi-detail-v1';
-let detailOverrides={asset:{},fault:{},cause:{}};
+let detailOverrides={asset:{},fault:{},cause:{},pdkb:{},stock:{},ito:{}};
 try{
  const saved=JSON.parse(localStorage.getItem(detailStorage)||'{}');
  for(const k of Object.keys(detailOverrides))if(saved[k]&&typeof saved[k]==='object'&&!Array.isArray(saved[k]))detailOverrides[k]=saved[k];
@@ -192,6 +199,20 @@ function decodeDetail(rows,kind){
   let key=data.periode+'|'+data.unit;
   if(kind==='asset'){
    for(const f of schema.slice(2))numeric(f,false,!['jtm_kms','jtr_kms'].includes(f));
+   if(Object.keys(data).length===2)continue;
+  }else if(kind==='pdkb'){
+   if(!pdTeams.includes(data.regu))fail('Pilih Regu 1 atau Regu 2.');
+   key+='|'+data.regu;
+   numeric('pekerjaan_titik',false,true);numeric('ens_diselamatkan_mwh');
+   if(Object.keys(data).length===3)continue;
+  }else if(kind==='stock'){
+   if(!materialSources.includes(data.sumber)||!materialTypes.includes(data.kategori))fail('Periksa sumber dan kategori material.');
+   if(!data.stok&&!data.kode_material&&!data.nama_material&&!data.satuan)continue;
+   if(!data.kode_material||data.kode_material.includes('|')||!data.nama_material||!data.satuan)fail('Isi kode, nama, dan satuan material.');
+   key+='|'+data.sumber+'|'+data.kategori+'|'+data.kode_material.toUpperCase();
+   numeric('stok',true);
+  }else if(kind==='ito'){
+   numeric('target_ito');numeric('realisasi_ito');
    if(Object.keys(data).length===2)continue;
   }else{
    if(Object.values(data).slice(2).every(v=>v===''))continue;
@@ -230,12 +251,14 @@ function detailTotals(rows,groupBy,field,title){
  return '<section class="detail-totals"><h3>'+title+'</h3>'+[...totals].sort((a,b)=>b[1]-a[1]).map(([label,n])=>'<div><span>'+ehtml(label)+'</span><progress value="'+n+'" max="'+max+'"></progress><strong>'+fmt(n)+'</strong></div>').join('')+'</section>';
 }
 const assetLabels=['Penyulang (unit)','Panjang JTM (kms)','Panjang JTR (kms)','GD (unit)','Recloser (unit)','LBS (unit)','LBS Threeway (unit)'];
-const detailFilters={kpi:'rating',asset:'',kind:'',brand:'',rating:'',metric:'SAIDI',outage:'',causeGroup:''};
+const detailFilters={source:'',materialType:'',kpi:'rating',asset:'',kind:'',brand:'',rating:'',metric:'SAIDI',outage:'',causeGroup:''};
 const selectDetail=(key,label,options,blank)=>'<label>'+label+'<select data-detail-filter="'+key+'">'+(blank?option('',blank):'')+options.map(([v,t])=>'<option value="'+v+'" '+(detailFilters[key]===v?'selected':'')+'>'+t+'</option>').join('')+'</select></label>';
 const choices=values=>values.map(v=>[v,v]);
 function renderDetail(){
- $('detailTabs').innerHTML=Object.entries(detailKinds).map(([k,v])=>'<button data-detail-tab="'+k+'" aria-pressed="'+(k===detailTab)+'">'+v.label+'</button>').join('');
+ $('detailTabs').innerHTML=Object.entries(detailKinds).filter(([,v])=>v.label).map(([k,v])=>'<button data-detail-tab="'+k+'" aria-pressed="'+(k===detailTab)+'">'+v.label+'</button>').join('');
  const body=$('detailBody');
+ if(detailTab==='pdkb'){body.innerHTML=renderPdkb();return}
+ if(detailTab==='stock'){body.innerHTML=renderLogistics();return}
  if(detailTab==='asset'){
   body.innerHTML='<h2>Data aset · '+unit()+'</h2>'+detailTable(['Aset','Jumlah / panjang'],detailKinds.asset.fields.slice(2).map((f,i)=>[assetLabels[i],fmt(assetValues(unit(),month())[f])]));
   return;
@@ -246,7 +269,6 @@ function renderDetail(){
   body.innerHTML='<div class="detail-filters">'+selectDetail('kpi','Indikator',Array.from(meta.values(),r=>[r[0],r[1]]))+'</div><p class="muted">'+ehtml(metaRow[2])+' · Hijau kebiruan: realisasi · Biru: target</p><div class="detail-chart scroll">'+chart(points)+'</div><div class="scroll"><table><thead><tr><th>ULP</th><th>Target</th><th>Realisasi</th><th>Pencapaian</th></tr></thead><tbody>'+points.map(p=>'<tr><td>'+p.label+'</td><td>'+fmt(p.values[0])+'</td><td>'+fmt(p.values[1])+'</td>'+achievementCell(k,...p.values)+'</tr>').join('')+'</tbody></table></div>';
   return;
  }
- if(detailTab==='map'){body.innerHTML=renderDetailMap();return}
  const f=detailFilters;
  if(detailTab==='fault'){
   const rows=detailRows('fault').filter(r=>(!f.asset||r.aset===f.asset)&&(!f.kind||r.jenis_gangguan===f.kind)&&r.merek.toLowerCase().includes(f.brand.toLowerCase())&&r.rating.toLowerCase().includes(f.rating.toLowerCase()));
@@ -266,15 +288,55 @@ function renderDetail(){
  detailTotals(rows,r=>r.kode_penyebab?r.kode_penyebab+' · '+faultCodes[r.kode_penyebab]:r.penyebab,'kontribusi','Rincian penyebab')+'</div>'+
  detailTable(['ID','Pemadaman','Sumber eksternal','Kelompok','Kode','Penyebab','Kontribusi'],rows.map(r=>[r.id,r.kategori_pemadaman,r.sumber_eksternal,r.kelompok_penyebab,r.kode_penyebab,r.penyebab,fmt(r.kontribusi)]));
 }
+const monthKey=m=>'2026-'+String(m).padStart(2,'0')+'|'+unit();
+function renderPdkb(){
+ const picked=pdTeams.map(team=>detailOverrides.pdkb[monthKey(month())+'|'+team]||{});
+ const total=field=>picked.every(row=>row[field]!=null)?fmt(picked.reduce((sum,row)=>sum+row[field],0)):'—';
+ const summary=pdTeams.map((team,i)=>[team,fmt(picked[i].pekerjaan_titik),fmt(picked[i].ens_diselamatkan_mwh)]);
+ summary.push(['Total 2 regu',total('pekerjaan_titik'),total('ens_diselamatkan_mwh')]);
+ const history=months.flatMap((name,i)=>pdTeams.map(team=>{
+  const row=detailOverrides.pdkb[monthKey(i+1)+'|'+team]||{};
+  return [name,team,fmt(row.pekerjaan_titik),fmt(row.ens_diselamatkan_mwh)];
+ }));
+ return '<h2>Realisasi PDKB · '+unit()+' · '+months[month()-1]+'</h2>'+detailTable(['Regu','Pekerjaan (titik)','ENS diselamatkan (MWh)'],summary)+
+ '<p class="muted">Total ditampilkan per indikator setelah kedua regu terisi. ENS diselamatkan diisi dari laporan PDKB.</p><h2>Riwayat bulanan</h2>'+
+ detailTable(['Bulan','Regu','Pekerjaan (titik)','ENS diselamatkan (MWh)'],history);
+}
+let logisticsView='stock';
+function renderLogistics(){
+ const tabs='<div class="toolbar"><button data-log-view="stock" aria-pressed="'+(logisticsView==='stock')+'">Stok MDU / Non-MDU</button><button data-log-view="ito" aria-pressed="'+(logisticsView==='ito')+'">Perputaran material (ITO)</button></div>';
+ if(logisticsView==='ito'){
+  const points=months.map((label,i)=>{
+   const row=detailOverrides.ito[monthKey(i+1)]||{};
+   return {label,short:label.slice(0,3),values:[row.target_ito,row.realisasi_ito]};
+  });
+  return tabs+'<h2>Perputaran material (ITO) · '+unit()+'</h2><div class="legend"><span><i></i>Realisasi</span><span><i></i>Target</span></div><div class="detail-chart scroll">'+chart(points)+'</div>'+detailTable(['Bulan','Target (kali)','Realisasi (kali)'],points.map(p=>[p.label,...p.values.map(fmt)]));
+ }
+ const {source,materialType}=detailFilters;
+ const rows=detailRows('stock').filter(r=>(!source||source===r.sumber)&&(!materialType||materialType===r.kategori));
+ return tabs+'<h2>Stok material · '+unit()+'</h2><div class="detail-filters">'+selectDetail('source','Sumber material',choices(materialSources),'Semua sumber')+selectDetail('materialType','Kategori',choices(materialTypes),'Semua kategori')+'</div>'+
+ detailTable(['Sumber material','Kategori','Kode material','Nama material','Stok','Satuan'],rows.map(r=>[r.sumber,r.kategori,r.kode_material,r.nama_material,fmt(r.stok),r.satuan]));
+}
+function templateRows(kind){
+ const period='2026-10',u='UP3 JAYAPURA';
+ if(kind==='pdkb')return months.flatMap((_,i)=>pdTeams.map(team=>['2026-'+String(i+1).padStart(2,'0'),u,team,'','']));
+ if(kind==='ito')return months.map((_,i)=>['2026-'+String(i+1).padStart(2,'0'),u,'','']);
+ return materialSources.flatMap(source=>materialTypes.map(type=>[period,u,source,type,'','','','']));
+}
+$('detailBody').onclick=e=>{
+ const b=e.target.closest('[data-log-view]');
+ if(b){logisticsView=b.dataset.logView;renderDetail();$('detailBody').querySelector('[aria-pressed=true]')?.focus()}
+};
 function assetValues(u,m){
  const k='2026-'+String(m).padStart(2,'0')+'|'+u;
  return {...assetBase[k],...detailOverrides.asset[k]};
 }
 const places=[
- [-2.5333,140.7,35,-26],[-2.5964,140.6324,50,20],[-2.5684,140.5052,-48,24],
- [-2.9028,140.7657,12,23],[-2.5791,140.1495,-20,23],[-1.8547,138.7493,0,-21]
+ [-2.5333,140.7,790,70],[-2.5964,140.6324,790,215],[-2.5684,140.5052,580,75],
+ [-2.9028,140.7657,790,342],[-2.5791,140.1495,540,320],[-1.8547,138.7493,123,78]
 ];
-function renderDetailMap(){
+const mapMetrics=[['sales','Penjualan'],['loss','Susut'],['saidi','SAIDI'],['tm','Gangguan TM']];
+function renderUlpMap(){
  const world=256*2**9;
  const xy=(lat,lon)=>[(lon+180)/360*world,(1-Math.asinh(Math.tan(lat*Math.PI/180))/Math.PI)/2*world];
  const center=xy(-2.36,139.77),left=center[0]-450,top=center[1]-200;
@@ -282,13 +344,17 @@ function renderDetailMap(){
  for(let x=Math.floor(left/256);x<=Math.floor((left+899)/256);x++)for(let y=Math.floor(top/256);y<=Math.floor((top+399)/256);y++){
   tiles+='<img alt="" loading="lazy" src="https://tile.openstreetmap.org/9/'+x+'/'+y+'.png" style="left:'+((x*256-left)/9)+'%;top:'+((y*256-top)/4)+'%">';
  }
- const k=detailFilters.kpi;
- const pins=places.map(([lat,lon,dx,dy],i)=>{
-  const [px,py]=xy(lat,lon),x=px-left,y=py-top,u=dataset.units[i+1],pair=values(u,month(),k);
-  lines+='<line x1="'+x+'" y1="'+y+'" x2="'+(x+dx)+'" y2="'+(y+dy)+'"/><circle cx="'+x+'" cy="'+y+'" r="5"/>';
-  return '<button class="map-pin" data-map-unit="'+(i+1)+'" style="left:'+((x+dx)/9)+'%;top:'+((y+dy)/4)+'%">'+icon(...status(k,...pair))+' '+u.slice(4)+' · '+fmt(pair[1])+'</button>';
+ const cards=places.map(([lat,lon,cx,cy],i)=>{
+  const [px,py]=xy(lat,lon),x=px-left,y=py-top,u=dataset.units[i+1];
+  lines+='<line x1="'+x+'" y1="'+y+'" x2="'+cx+'" y2="'+cy+'"/><circle cx="'+x+'" cy="'+y+'" r="5"/>';
+  const metrics=mapMetrics.map(([k,label])=>{
+   const [target,actual]=values(u,month(),k),[,name,satuan]=meta.get(k);
+   const value=actual==null?'—':fmt(actual)+(satuan==='%'?'%':' '+satuan);
+   return '<span class="map-metric" title="'+ehtml(name)+' · Target '+fmt(target)+' · Pencapaian '+percent(achievement(k,target,actual))+'"><span>'+label+'</span><span><b>'+value+'</b> '+icon(...status(k,target,actual))+'</span></span>';
+  }).join('');
+  return '<button class="map-pin map-kpis" data-map-unit="'+(i+1)+'" style="left:'+(cx/9)+'%;top:'+(cy/4)+'%"><strong>'+u+'</strong>'+metrics+'</button>';
  }).join('');
- return '<div class="detail-filters">'+selectDetail('kpi','Indikator',Array.from(meta.values(),r=>[r[0],r[1]]))+'</div><p class="muted">Penanda menunjukkan pusat lokalitas. Klik ULP untuk melihat kinerjanya. Peta dasar memerlukan internet.</p><div class="scroll"><div class="map-frame">'+tiles+'<svg viewBox="0 0 900 400" aria-hidden="true">'+lines+'</svg>'+pins+'</div></div><p class="muted"><a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a></p>';
+ return '<p class="muted">Realisasi '+months[month()-1]+' 2026. Arahkan kursor ke KPI untuk melihat target dan pencapaian. Klik kartu untuk membuka kinerja ULP.</p><div class="scroll" tabindex="0" aria-label="Peta enam ULP, dapat digulir mendatar"><div class="map-frame">'+tiles+'<svg viewBox="0 0 900 400" aria-hidden="true">'+lines+'</svg>'+cards+'</div></div><p class="muted">Penanda menunjukkan pusat lokalitas. Peta dasar memerlukan internet. <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a></p>';
 }
 $('detailTabs').onclick=e=>{
  const b=e.target.closest('[data-detail-tab]');if(!b)return;
@@ -300,7 +366,7 @@ $('detailBody').onchange=e=>{
  detailFilters[k]=e.target.value;renderDetail();
  $('detailBody').querySelector('[data-detail-filter="'+k+'"]')?.focus();
 };
-$('detailBody').onclick=e=>{
+$('mapBody').onclick=e=>{
  const b=e.target.closest('[data-map-unit]');if(!b)return;
  $('unit').value=dataset.units[Number(b.dataset.mapUnit)];
  changePage('ulp');
@@ -314,7 +380,8 @@ function csvDownload(rows,name){
 function downloadDetail(kind,blank){
  const schema=detailKinds[kind];
  let rows=[];
- if(kind==='asset'){
+ if(blank&&['pdkb','stock','ito'].includes(kind))rows=templateRows(kind);
+ else if(kind==='asset'){
   for(const u of dataset.units)for(let m=1;m<=12;m++){
    const row=blank?{}:assetValues(u,m);
    rows.push(['2026-'+String(m).padStart(2,'0'),u,...schema.fields.slice(2).map(f=>row[f])]);
@@ -324,7 +391,8 @@ function downloadDetail(kind,blank){
  csvDownload([schema.fields,...rows],(blank?'Template_':'Ekspor_')+schema.sheet+'_UP3_Jayapura_2026.csv');
 }
 $('detailExport').onclick=()=>{
- if(detailTab==='performance'||detailTab==='map')downloadTable(false);
+ if(detailTab==='performance')downloadTable(false);
+ else if(detailTab==='stock')downloadDetail(logisticsView,false);
  else downloadDetail(detailTab,false);
 };
 
@@ -469,7 +537,9 @@ async function importFrom(load,kind){
    localStorage.setItem(detailStorage,JSON.stringify(next));
    detailOverrides=next;
    const first=changes[keys[0]];
-   detailTab=kind;changePage('detail');
+   detailTab=kind==='ito'?'stock':kind;
+   if(kind==='ito'||kind==='stock')logisticsView=kind;
+   changePage('detail');
    $('unit').value=first.unit;$('month').value=String(Number(first.periode.slice(-2)));
    render();$('importDialog').close();
    $('notice').textContent=keys.length+' entri detail tersimpan di browser ini.';

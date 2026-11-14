@@ -45,8 +45,8 @@ TAMPILAN KINERJA PER ULP
 Ikon status dan persentase ditampilkan berdampingan di kolom Pencapaian.
 
 KINERJA DISTRIBUSI DETAIL
-- Pilih Data aset, Grafik per ULP, Detail gangguan, Penyebab SAIDI/SAIFI/ENS,
-  atau Peta ULP. Pilih bulan dan unit pada filter utama.
+- Pilih Data aset, Grafik per ULP, Detail gangguan,
+  atau Penyebab SAIDI/SAIFI/ENS. Pilih bulan dan unit pada filter utama.
 - JTM, JTR, dan GD awal diambil dari Sheet5 pada workbook sumber. Nilai kosong
   berarti bulan atau aset tersebut belum memiliki isian yang bisa dipakai.
 - Grafik per ULP menampilkan seluruh KPI, termasuk rating negatif, gangguan
@@ -54,7 +54,8 @@ KINERJA DISTRIBUSI DETAIL
   Kinerja. Rincian gangguan adalah register terpisah dan tidak mengisi KPI
   otomatis. Samakan basis periode sebelum merekonsiliasi jumlah.
 - Peta memerlukan koneksi ke OpenStreetMap untuk peta dasar. Penanda adalah
-  pusat lokalitas sebagai acuan. Pilih indikator untuk melihat capaian ULP.
+  pusat lokalitas sebagai acuan. Buka Peta ULP dari menu utama. Kartu menampilkan penjualan, susut,
+  SAIDI dan gangguan TM untuk setiap ULP pada bulan terpilih.
 
 CARA MENGISI TEMPLATE
 1. Di menu Impor data, pilih jenis data lalu Unduh template CSV. Semua
@@ -81,3 +82,18 @@ CARA MENGISI TEMPLATE
    browser. Pilih jenis impor yang sama. Untuk XLSX, nama tab yang dibaca
    adalah Kinerja, Aset, Gangguan, atau Penyebab, dengan fallback lembar
    pertama. Impor dan ekspor dilakukan per jenis data.
+
+PDKB DAN LOGISTIK
+- PDKB menampilkan realisasi bulanan Regu 1 dan Regu 2. Isi pekerjaan_titik
+  sebagai jumlah titik dan ens_diselamatkan_mwh dari laporan PDKB. Total
+  tiap indikator muncul setelah kedua regu terisi. Gunakan tab PDKB.
+- Stok menggunakan tab Stok dan satu baris per periode, unit, sumber,
+  kategori dan kode material. Pilih MDU atau Non-MDU. Sumber yang diterima:
+  UP3 Jayapura - Distribusi, UP3 Jayapura - Niaga, UP3 Wamena, UPPK Papua.
+  Kolom unit mengikuti filter dashboard, sedangkan sumber menunjukkan
+  asal material. Masukkan stok dalam satuan yang ditulis pada kolom satuan.
+- Gunakan tab ITO untuk target dan realisasi perputaran material dalam kali,
+  dengan satu baris per periode dan unit. Grafik menampilkan tren 12 bulan.
+- Pilih jenis data di Impor data. Template CSV dapat dibuka di Excel.
+  Gunakan nama tab di atas jika menyimpan sebagai XLSX. Ekspor data detail
+  mengikuti tab yang sedang dibuka, termasuk pilihan Stok atau ITO.

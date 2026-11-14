@@ -43,6 +43,8 @@ main#content{flex:1;min-height:0;max-width:none;width:100%;overflow:auto;margin:
 .map-metric{display:flex;justify-content:space-between;gap:5px;align-items:center;font-size:11px;margin-top:3px}
 .map-metric>span:last-child{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
 .map-metric .status-icon{width:15px;height:15px;font-size:11px}
+
+.dashboard-jargon{display:block;margin-top:12px;padding:11px 14px;background:#e2f2ef;border-radius:8px;color:#0d514e;text-align:center;font-weight:800;font-size:clamp(15px,2vw,21px);letter-spacing:.02em}
 </style>
 </head><body>
 <header><strong>PLN <span>UP3 JAYAPURA</span></strong><span>Jaringan dan Konstruksi</span></header>
@@ -67,18 +69,18 @@ main#content{flex:1;min-height:0;max-width:none;width:100%;overflow:auto;margin:
 </section>
 <section id="detailPage" class="panel" hidden><div class="detail-head"><h2>Kinerja Distribusi Detail</h2><button id="detailExport">Ekspor data detail</button></div><nav id="detailTabs" aria-label="Menu distribusi detail"></nav><div id="detailBody"></div></section>
 <section id="mapPage" class="panel" hidden><h2>Peta Kinerja ULP</h2><div id="mapBody"></div></section>
-<footer>Sumber data <strong>Realisasi Dashboard Kinerja Distribusi UP3 Jayapura.xlsx</strong>. Data awal memuat realisasi sampai Oktober 2026. Tanda — menunjukkan nilai yang belum tersedia.</footer>
+<footer>Sumber data <strong>Realisasi Dashboard Kinerja Distribusi UP3 Jayapura.xlsx</strong>. Data awal memuat realisasi sampai Oktober 2026. Tanda — menunjukkan nilai yang belum tersedia.<strong class="dashboard-jargon">Gas Sampe Kandaz, TORANG BISA!!!</strong></footer>
 </main>
 </div>
 <dialog id="importDialog">
 <h2>Impor data kinerja</h2>
 <form id="linkForm">
-<label>Jenis data<select id="importKind"><option value="performance">Kinerja (18 KPI dan indikator detail)</option><option value="asset">Data aset</option><option value="fault">Detail gangguan</option><option value="cause">Penyebab SAIDI / SAIFI / ENS</option></select></label>
+<label>Jenis data<select id="importKind"><option value="performance">Kinerja (18 KPI dan indikator detail)</option><option value="asset">Data aset</option><option value="fault">Detail gangguan</option><option value="cause">Penyebab SAIDI / SAIFI / ENS</option><option value="pdkb">Realisasi PDKB</option><option value="stock">Stok material</option><option value="ito">Perputaran material (ITO)</option></select></label>
 <label>Tautan spreadsheet<input type="url" id="sheetLink" required placeholder="https://…"></label>
 <div class="toolbar"><button type="submit">Impor tautan</button><button type="button" id="importFileButton">Unggah Excel / CSV</button><button type="button" id="template">Unduh template CSV</button><button type="button" id="importClose">Tutup</button></div>
 </form>
 <input type="file" id="importFile" accept=".xlsx,.csv" hidden>
-<p class="muted">Gunakan kolom template. File Excel memakai tab Kinerja, Aset, Gangguan, atau Penyebab sesuai jenis data, atau lembar pertama. Tautan harus dapat dibaca browser. Isian tersimpan di browser ini.</p>
+<p class="muted">Gunakan kolom template. File Excel memakai tab Kinerja, Aset, Gangguan, Penyebab, PDKB, Stok, atau ITO sesuai jenis data, atau lembar pertama. Tautan harus dapat dibaca browser. Isian tersimpan di browser ini.</p>
 <p id="importFeedback" role="status"></p>
 </dialog>
 <script id="data">
@@ -232,7 +234,13 @@ $('print').onclick=()=>window.print();
 const columns=['periode','unit','kode_indikator','indikator','satuan','target','realisasi','pencapaian_%','status'];
 const overrides={};
 const storageKey='up3-jayapura-distribusi-2026-import';
+const pdTeams=['Regu 1','Regu 2'];
+const materialSources=['UP3 Jayapura - Distribusi','UP3 Jayapura - Niaga','UP3 Wamena','UPPK Papua'];
+const materialTypes=['MDU','Non-MDU'];
 const detailKinds={
+ pdkb:{label:'PDKB',sheet:'PDKB',fields:['periode','unit','regu','pekerjaan_titik','ens_diselamatkan_mwh']},
+ stock:{label:'Logistik',sheet:'Stok',fields:['periode','unit','sumber','kategori','kode_material','nama_material','satuan','stok']},
+ ito:{sheet:'ITO',fields:['periode','unit','target_ito','realisasi_ito']},
  asset:{label:'Data aset',sheet:'Aset',fields:['periode','unit','penyulang','jtm_kms','jtr_kms','gd','recloser','lbs','lbs_threeway']},
  performance:{label:'Grafik per ULP',sheet:'Kinerja',fields:columns},
  fault:{label:'Detail gangguan',sheet:'Gangguan',fields:['periode','unit','id','aset','nama_aset','rating','merek','jenis_gangguan','kode_penyebab','penyebab','jumlah']},
@@ -250,7 +258,7 @@ const extraKpis=[
 for(const row of extraKpis)meta.set(row[0],row);
 function kpiKey(u,m,k){return dataset.units.includes(u)&&Number.isInteger(m)&&m>=1&&m<=12&&meta.has(k)}
 const detailStorage='up3-distribusi-detail-v1';
-let detailOverrides={asset:{},fault:{},cause:{}};
+let detailOverrides={asset:{},fault:{},cause:{},pdkb:{},stock:{},ito:{}};
 try{
  const saved=JSON.parse(localStorage.getItem(detailStorage)||'{}');
  for(const k of Object.keys(detailOverrides))if(saved[k]&&typeof saved[k]==='object'&&!Array.isArray(saved[k]))detailOverrides[k]=saved[k];
@@ -280,6 +288,20 @@ function decodeDetail(rows,kind){
   let key=data.periode+'|'+data.unit;
   if(kind==='asset'){
    for(const f of schema.slice(2))numeric(f,false,!['jtm_kms','jtr_kms'].includes(f));
+   if(Object.keys(data).length===2)continue;
+  }else if(kind==='pdkb'){
+   if(!pdTeams.includes(data.regu))fail('Pilih Regu 1 atau Regu 2.');
+   key+='|'+data.regu;
+   numeric('pekerjaan_titik',false,true);numeric('ens_diselamatkan_mwh');
+   if(Object.keys(data).length===3)continue;
+  }else if(kind==='stock'){
+   if(!materialSources.includes(data.sumber)||!materialTypes.includes(data.kategori))fail('Periksa sumber dan kategori material.');
+   if(!data.stok&&!data.kode_material&&!data.nama_material&&!data.satuan)continue;
+   if(!data.kode_material||data.kode_material.includes('|')||!data.nama_material||!data.satuan)fail('Isi kode, nama, dan satuan material.');
+   key+='|'+data.sumber+'|'+data.kategori+'|'+data.kode_material.toUpperCase();
+   numeric('stok',true);
+  }else if(kind==='ito'){
+   numeric('target_ito');numeric('realisasi_ito');
    if(Object.keys(data).length===2)continue;
   }else{
    if(Object.values(data).slice(2).every(v=>v===''))continue;
@@ -318,12 +340,14 @@ function detailTotals(rows,groupBy,field,title){
  return '<section class="detail-totals"><h3>'+title+'</h3>'+[...totals].sort((a,b)=>b[1]-a[1]).map(([label,n])=>'<div><span>'+ehtml(label)+'</span><progress value="'+n+'" max="'+max+'"></progress><strong>'+fmt(n)+'</strong></div>').join('')+'</section>';
 }
 const assetLabels=['Penyulang (unit)','Panjang JTM (kms)','Panjang JTR (kms)','GD (unit)','Recloser (unit)','LBS (unit)','LBS Threeway (unit)'];
-const detailFilters={kpi:'rating',asset:'',kind:'',brand:'',rating:'',metric:'SAIDI',outage:'',causeGroup:''};
+const detailFilters={source:'',materialType:'',kpi:'rating',asset:'',kind:'',brand:'',rating:'',metric:'SAIDI',outage:'',causeGroup:''};
 const selectDetail=(key,label,options,blank)=>'<label>'+label+'<select data-detail-filter="'+key+'">'+(blank?option('',blank):'')+options.map(([v,t])=>'<option value="'+v+'" '+(detailFilters[key]===v?'selected':'')+'>'+t+'</option>').join('')+'</select></label>';
 const choices=values=>values.map(v=>[v,v]);
 function renderDetail(){
- $('detailTabs').innerHTML=Object.entries(detailKinds).map(([k,v])=>'<button data-detail-tab="'+k+'" aria-pressed="'+(k===detailTab)+'">'+v.label+'</button>').join('');
+ $('detailTabs').innerHTML=Object.entries(detailKinds).filter(([,v])=>v.label).map(([k,v])=>'<button data-detail-tab="'+k+'" aria-pressed="'+(k===detailTab)+'">'+v.label+'</button>').join('');
  const body=$('detailBody');
+ if(detailTab==='pdkb'){body.innerHTML=renderPdkb();return}
+ if(detailTab==='stock'){body.innerHTML=renderLogistics();return}
  if(detailTab==='asset'){
   body.innerHTML='<h2>Data aset · '+unit()+'</h2>'+detailTable(['Aset','Jumlah / panjang'],detailKinds.asset.fields.slice(2).map((f,i)=>[assetLabels[i],fmt(assetValues(unit(),month())[f])]));
   return;
@@ -353,6 +377,45 @@ function renderDetail(){
  detailTotals(rows,r=>r.kode_penyebab?r.kode_penyebab+' · '+faultCodes[r.kode_penyebab]:r.penyebab,'kontribusi','Rincian penyebab')+'</div>'+
  detailTable(['ID','Pemadaman','Sumber eksternal','Kelompok','Kode','Penyebab','Kontribusi'],rows.map(r=>[r.id,r.kategori_pemadaman,r.sumber_eksternal,r.kelompok_penyebab,r.kode_penyebab,r.penyebab,fmt(r.kontribusi)]));
 }
+const monthKey=m=>'2026-'+String(m).padStart(2,'0')+'|'+unit();
+function renderPdkb(){
+ const picked=pdTeams.map(team=>detailOverrides.pdkb[monthKey(month())+'|'+team]||{});
+ const total=field=>picked.every(row=>row[field]!=null)?fmt(picked.reduce((sum,row)=>sum+row[field],0)):'—';
+ const summary=pdTeams.map((team,i)=>[team,fmt(picked[i].pekerjaan_titik),fmt(picked[i].ens_diselamatkan_mwh)]);
+ summary.push(['Total 2 regu',total('pekerjaan_titik'),total('ens_diselamatkan_mwh')]);
+ const history=months.flatMap((name,i)=>pdTeams.map(team=>{
+  const row=detailOverrides.pdkb[monthKey(i+1)+'|'+team]||{};
+  return [name,team,fmt(row.pekerjaan_titik),fmt(row.ens_diselamatkan_mwh)];
+ }));
+ return '<h2>Realisasi PDKB · '+unit()+' · '+months[month()-1]+'</h2>'+detailTable(['Regu','Pekerjaan (titik)','ENS diselamatkan (MWh)'],summary)+
+ '<p class="muted">Total ditampilkan per indikator setelah kedua regu terisi. ENS diselamatkan diisi dari laporan PDKB.</p><h2>Riwayat bulanan</h2>'+
+ detailTable(['Bulan','Regu','Pekerjaan (titik)','ENS diselamatkan (MWh)'],history);
+}
+let logisticsView='stock';
+function renderLogistics(){
+ const tabs='<div class="toolbar"><button data-log-view="stock" aria-pressed="'+(logisticsView==='stock')+'">Stok MDU / Non-MDU</button><button data-log-view="ito" aria-pressed="'+(logisticsView==='ito')+'">Perputaran material (ITO)</button></div>';
+ if(logisticsView==='ito'){
+  const points=months.map((label,i)=>{
+   const row=detailOverrides.ito[monthKey(i+1)]||{};
+   return {label,short:label.slice(0,3),values:[row.target_ito,row.realisasi_ito]};
+  });
+  return tabs+'<h2>Perputaran material (ITO) · '+unit()+'</h2><div class="legend"><span><i></i>Realisasi</span><span><i></i>Target</span></div><div class="detail-chart scroll">'+chart(points)+'</div>'+detailTable(['Bulan','Target (kali)','Realisasi (kali)'],points.map(p=>[p.label,...p.values.map(fmt)]));
+ }
+ const {source,materialType}=detailFilters;
+ const rows=detailRows('stock').filter(r=>(!source||source===r.sumber)&&(!materialType||materialType===r.kategori));
+ return tabs+'<h2>Stok material · '+unit()+'</h2><div class="detail-filters">'+selectDetail('source','Sumber material',choices(materialSources),'Semua sumber')+selectDetail('materialType','Kategori',choices(materialTypes),'Semua kategori')+'</div>'+
+ detailTable(['Sumber material','Kategori','Kode material','Nama material','Stok','Satuan'],rows.map(r=>[r.sumber,r.kategori,r.kode_material,r.nama_material,fmt(r.stok),r.satuan]));
+}
+function templateRows(kind){
+ const period='2026-10',u='UP3 JAYAPURA';
+ if(kind==='pdkb')return months.flatMap((_,i)=>pdTeams.map(team=>['2026-'+String(i+1).padStart(2,'0'),u,team,'','']));
+ if(kind==='ito')return months.map((_,i)=>['2026-'+String(i+1).padStart(2,'0'),u,'','']);
+ return materialSources.flatMap(source=>materialTypes.map(type=>[period,u,source,type,'','','','']));
+}
+$('detailBody').onclick=e=>{
+ const b=e.target.closest('[data-log-view]');
+ if(b){logisticsView=b.dataset.logView;renderDetail();$('detailBody').querySelector('[aria-pressed=true]')?.focus()}
+};
 function assetValues(u,m){
  const k='2026-'+String(m).padStart(2,'0')+'|'+u;
  return {...assetBase[k],...detailOverrides.asset[k]};
@@ -406,7 +469,8 @@ function csvDownload(rows,name){
 function downloadDetail(kind,blank){
  const schema=detailKinds[kind];
  let rows=[];
- if(kind==='asset'){
+ if(blank&&['pdkb','stock','ito'].includes(kind))rows=templateRows(kind);
+ else if(kind==='asset'){
   for(const u of dataset.units)for(let m=1;m<=12;m++){
    const row=blank?{}:assetValues(u,m);
    rows.push(['2026-'+String(m).padStart(2,'0'),u,...schema.fields.slice(2).map(f=>row[f])]);
@@ -417,6 +481,7 @@ function downloadDetail(kind,blank){
 }
 $('detailExport').onclick=()=>{
  if(detailTab==='performance')downloadTable(false);
+ else if(detailTab==='stock')downloadDetail(logisticsView,false);
  else downloadDetail(detailTab,false);
 };
 
@@ -561,7 +626,9 @@ async function importFrom(load,kind){
    localStorage.setItem(detailStorage,JSON.stringify(next));
    detailOverrides=next;
    const first=changes[keys[0]];
-   detailTab=kind;changePage('detail');
+   detailTab=kind==='ito'?'stock':kind;
+   if(kind==='ito'||kind==='stock')logisticsView=kind;
+   changePage('detail');
    $('unit').value=first.unit;$('month').value=String(Number(first.periode.slice(-2)));
    render();$('importDialog').close();
    $('notice').textContent=keys.length+' entri detail tersimpan di browser ini.';
