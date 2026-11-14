@@ -65,7 +65,7 @@ body.panel-collapsed>header,.panel-collapsed #panelToggle{display:none}
 #panelToggle{position:absolute;top:7px;right:8px;display:grid;place-items:center;width:32px;height:32px;padding:0;border:1px solid #ffffff80;background:#ffffff1a;color:white;font-size:23px;line-height:1}
 #panelToggle:hover{background:#ffffff35}
 
-.panel-bar:has(#compactTitle[hidden]){display:none}
+
 @media print{#panelToggle,#slideFull{display:none!important}.presentation main#content{background:white}}
 
 main#content{container-type:size}
@@ -85,23 +85,47 @@ main#content{container-type:size}
  main#content{container-type:normal}
  #summaryDetail{max-height:none;overflow:visible;scrollbar-gutter:auto}
 }
+
+#zoomControls{display:flex;gap:4px;margin-inline-start:auto}
+#zoomControls button{min-width:32px;min-height:30px}
+#zoomReset{min-width:57px!important;font-variant-numeric:tabular-nums}
+#zoomControls button:disabled{opacity:.45;cursor:default}
+@media print{#zoomControls{display:none}#zoomNavigation,#dataCanvas{zoom:1!important}}
+
+
+#panelExpanded .hero{padding-right:16px;padding-top:36px}
+#heroTools{position:absolute;top:6px;right:8px;display:flex;align-items:center;gap:5px}
+#compactTools{margin-inline-start:auto}
+#zoomControls{gap:2px;margin:0}
+#zoomControls button{min-width:24px;min-height:24px;padding:2px 4px;font-size:11px;line-height:1.2;background:transparent;border-color:#7893a466;color:inherit}
+#zoomReset{min-width:40px!important}
+#heroTools #zoomControls button{border-color:#ffffff55}
+#zoomControls button:hover:not(:disabled){background:#7893a422}
+#heroTools #panelToggle{position:static;width:25px;height:24px;font-size:19px}
+.panel-bar:has(#compactTitle[hidden]){display:none}
+@media print{#heroTools,#compactTools{display:none}}
 </style>
 </head><body>
 <header><strong>PLN <span>UP3 JAYAPURA</span></strong><span>Jaringan dan Konstruksi</span></header>
 <div class="dashboard-shell">
 <div class="dashboard-top">
 <div id="panelExpanded">
-<section class="hero"><div><p class="label">LAPORAN KINERJA · 2026</p><h1>Kinerja Distribusi</h1><p>Target, realisasi, dan tren per unit</p></div><strong id="periodLabel"></strong><button id="panelToggle" type="button" aria-controls="panelExpanded" aria-expanded="true" aria-label="Ciutkan panel" title="Ciutkan panel (M)">−</button></section>
-<div class="filters"><label>Unit<select id="unit"></select></label><label>Periode<select id="month"></select></label><label>Jenis grafik<select id="type"><option value="line">Garis</option><option value="bar">Batang</option><option value="dot">Titik</option></select></label><button id="import">Impor data</button><button id="export">Ekspor CSV</button><button id="present" aria-pressed="false">Mode paparan</button><button id="slideFull" type="button" aria-label="Layar penuh" title="Layar penuh" hidden>⛶</button><button id="print">Cetak / PDF</button></div>
-<nav id="pages" aria-label="Menu dashboard"><button data-page="summary" aria-pressed="true">Ringkasan kinerja</button><button data-page="ulp" aria-pressed="false">Kinerja per ULP</button><button data-page="detail" aria-pressed="false">Kinerja Distribusi Detail</button><button data-page="map" aria-pressed="false">Peta ULP</button></nav></div>
+<section class="hero"><div><p class="label">LAPORAN KINERJA · 2026</p><h1>Kinerja Distribusi</h1><p>Target, realisasi, dan tren per unit</p></div><strong id="periodLabel"></strong><div id="heroTools"><div id="zoomControls" role="group" aria-label="Zoom area data">
+<button id="zoomOut" type="button" aria-label="Perkecil data" title="Perkecil data">−</button>
+<button id="zoomReset" type="button" aria-label="Kembalikan zoom ke 100%" title="Reset zoom ke 100%">100%</button>
+<button id="zoomIn" type="button" aria-label="Perbesar data" title="Perbesar data">+</button>
+</div><button id="panelToggle" type="button" aria-controls="panelExpanded" aria-expanded="true" aria-label="Ciutkan panel" title="Ciutkan panel (M)">−</button></div></section>
+<div id="zoomNavigation"><div class="filters"><label>Unit<select id="unit"></select></label><label>Periode<select id="month"></select></label><label>Jenis grafik<select id="type"><option value="line">Garis</option><option value="bar">Batang</option><option value="dot">Titik</option></select></label><button id="import">Impor data</button><button id="export">Ekspor CSV</button><button id="present" aria-pressed="false">Mode paparan</button><button id="slideFull" type="button" aria-label="Layar penuh" title="Layar penuh" hidden>⛶</button><button id="print">Cetak / PDF</button></div>
+<nav id="pages" aria-label="Menu dashboard"><button data-page="summary" aria-pressed="true">Ringkasan kinerja</button><button data-page="ulp" aria-pressed="false">Kinerja per ULP</button><button data-page="detail" aria-pressed="false">Kinerja Distribusi Detail</button><button data-page="map" aria-pressed="false">Peta ULP</button></nav></div></div>
 <div class="panel-bar">
 <h1 id="compactTitle" hidden><button id="panelOpen" type="button" aria-controls="panelExpanded" aria-expanded="false" aria-label="Kinerja Distribusi · Buka panel" title="Buka panel (M)">Kinerja Distribusi · UP3 Jayapura</button></h1>
+<div id="compactTools"></div>
 
 
 </div>
 </div>
 <main id="content" tabindex="0" aria-label="Isi dashboard">
-<p id="notice" role="status"></p>
+<div id="dataCanvas"><p id="notice" role="status"></p>
 <div class="status-legend" id="statusLegend" aria-label="Legenda status"></div>
 <div id="summaryPage">
 <nav id="groups" aria-label="Kelompok indikator"></nav>
@@ -115,7 +139,7 @@ main#content{container-type:size}
 </section>
 <section id="detailPage" class="panel" hidden><div class="detail-head"><h2>Kinerja Distribusi Detail</h2><button id="detailExport">Ekspor data detail</button></div><nav id="detailTabs" aria-label="Menu distribusi detail"></nav><div id="detailBody"></div></section>
 <section id="mapPage" class="panel" hidden><h2>Peta Kinerja ULP</h2><div id="mapBody"></div></section>
-<footer>Sumber data <strong>Realisasi Dashboard Kinerja Distribusi UP3 Jayapura.xlsx</strong>. Data awal memuat realisasi sampai Oktober 2026. Tanda — menunjukkan nilai yang belum tersedia.<strong class="dashboard-jargon">Gas Sampe Kandaz, TORANG BISA!!!</strong></footer>
+<footer>Sumber data <strong>Realisasi Dashboard Kinerja Distribusi UP3 Jayapura.xlsx</strong>. Data awal memuat realisasi sampai Oktober 2026. Tanda — menunjukkan nilai yang belum tersedia.<strong class="dashboard-jargon">Gas Sampe Kandaz, TORANG BISA!!!</strong></footer></div>
 </main>
 </div>
 <dialog id="importDialog">
@@ -763,6 +787,8 @@ let panelCollapsed=false;
 function setPanelCollapsed(collapsed){
  panelCollapsed=collapsed;
  $('panelExpanded').hidden=collapsed;
+ if(collapsed)$('compactTools').append($('zoomControls'));
+ else $('heroTools').insertBefore($('zoomControls'),$('panelToggle'));
  $('panelToggle').setAttribute('aria-expanded',String(!collapsed));
  $('compactTitle').hidden=!collapsed;
  $('panelOpen').setAttribute('aria-expanded',String(!collapsed));
@@ -825,6 +851,20 @@ document.addEventListener('keydown',event=>{
  event.preventDefault();
  openSlide(activeSlide()+(event.key==='ArrowLeft'?-1:1));
 });
+
+let dataZoom=100;
+function setDataZoom(percent){
+ dataZoom=Math.max(50,Math.min(150,percent));
+ const scale=String(dataZoom/100);
+ $('zoomNavigation').style.zoom=scale;
+ $('dataCanvas').style.zoom=scale;
+ $('zoomReset').textContent=dataZoom+'%';
+ $('zoomOut').disabled=dataZoom===50;
+ $('zoomIn').disabled=dataZoom===150;
+}
+$('zoomOut').onclick=()=>setDataZoom(dataZoom-10);
+$('zoomIn').onclick=()=>setDataZoom(dataZoom+10);
+$('zoomReset').onclick=()=>setDataZoom(100);
 
 render();
 </script>
