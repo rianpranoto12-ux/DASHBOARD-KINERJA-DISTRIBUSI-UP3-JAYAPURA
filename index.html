@@ -63,14 +63,12 @@ main#content{flex:1;min-height:0;max-width:none;width:100%;overflow:auto;margin:
 
 .panel-bar{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:4px 0}
 .panel-bar #slideControls:not([hidden]){border:0;padding:0}
-.compact-context{font-size:12px;font-weight:650;color:var(--muted)}
-body.panel-collapsed>header{display:none}
+body.panel-collapsed>header,.panel-collapsed #panelToggle{display:none}
 .panel-collapsed .dashboard-top{padding-top:0}
-.panel-collapsed .slide-verbose{display:none}
-.panel-collapsed #slideControls label{font-size:0}
-.panel-collapsed #slideControls select{font-size:12px;max-width:min(230px,58vw)}
-.panel-collapsed #slideControls button{font-size:12px}
-@media print{.panel-bar{display:none!important}}
+#compactTitle{margin:0;font-size:clamp(13px,1.2vw,18px);line-height:1.25}
+#panelOpen{font:inherit;font-weight:750;background:transparent;border-color:transparent;padding:3px 0}
+#panelOpen:hover{text-decoration:underline}
+@media print{#panelToggle,#slideControls{display:none!important}}
 </style>
 </head><body>
 <header><strong>PLN <span>UP3 JAYAPURA</span></strong><span>Jaringan dan Konstruksi</span></header>
@@ -82,7 +80,7 @@ body.panel-collapsed>header{display:none}
 <nav id="pages" aria-label="Menu dashboard"><button data-page="summary" aria-pressed="true">Ringkasan kinerja</button><button data-page="ulp" aria-pressed="false">Kinerja per ULP</button><button data-page="detail" aria-pressed="false">Kinerja Distribusi Detail</button><button data-page="map" aria-pressed="false">Peta ULP</button></nav></div>
 <div class="panel-bar">
 <button id="panelToggle" type="button" aria-controls="panelExpanded" aria-expanded="true">Ciutkan panel</button>
-<span id="compactContext" class="compact-context" hidden></span>
+<h1 id="compactTitle" hidden><button id="panelOpen" type="button" aria-controls="panelExpanded" aria-expanded="false" aria-label="Kinerja Distribusi · Buka panel" title="Buka panel (M)">Kinerja Distribusi · UP3 Jayapura</button></h1>
 
 <div id="slideControls" hidden aria-label="Navigasi paparan">
 <button id="slidePrev" type="button" aria-label="Slide sebelumnya">←<span class="slide-verbose"> Sebelumnya</span></button>
@@ -249,7 +247,6 @@ function render(){
  const [groupTitle,items]=dataset.groups[group];
  $('groupTitle').textContent=groupTitle;
  $('periodLabel').textContent=months[month()-1]+' 2026 · '+unit();
- $('compactContext').textContent=$('periodLabel').textContent;
  if(page==='ulp'){renderUlp();return}
  if(page==='detail'){renderDetail();return}
  if(page==='map'){$('mapBody').innerHTML=renderUlpMap();return}
@@ -769,16 +766,18 @@ let panelCollapsed=false;
 function setPanelCollapsed(collapsed){
  panelCollapsed=collapsed;
  $('panelExpanded').hidden=collapsed;
- $('compactContext').hidden=!collapsed;
  $('panelToggle').setAttribute('aria-expanded',String(!collapsed));
- $('panelToggle').textContent=collapsed?'Buka panel':'Ciutkan panel';
+ $('compactTitle').hidden=!collapsed;
+ $('panelOpen').setAttribute('aria-expanded',String(!collapsed));
+ $('slideControls').hidden=collapsed||!presenting;
  document.body.classList.toggle('panel-collapsed',collapsed);
 }
-$('panelToggle').onclick=()=>setPanelCollapsed(!panelCollapsed);
+$('panelToggle').onclick=()=>{setPanelCollapsed(true);$('panelOpen').focus()};
+$('panelOpen').onclick=()=>{setPanelCollapsed(false);$('panelToggle').focus()};
 function togglePresentation(){
  presenting=!presenting;
  document.body.classList.toggle('presentation',presenting);
- $('slideControls').hidden=!presenting;
+ $('slideControls').hidden=panelCollapsed||!presenting;
  $('present').setAttribute('aria-pressed',String(presenting));
  $('present').textContent=presenting?'Keluar paparan':'Mode paparan';
  if(!presenting&&document.fullscreenElement)document.exitFullscreen?.().catch(()=>{});
@@ -803,7 +802,7 @@ document.addEventListener('fullscreenchange',()=>{
 });
 document.addEventListener('keydown',event=>{
  if($('importDialog').open||event.ctrlKey||event.altKey||event.metaKey||event.shiftKey||event.target?.closest?.('input,select,textarea,[contenteditable],.scroll'))return;
- if(event.key.toLowerCase()==='m'){event.preventDefault();setPanelCollapsed(!panelCollapsed);return}
+ if(event.key.toLowerCase()==='m'){event.preventDefault();setPanelCollapsed(!panelCollapsed);(panelCollapsed?$('panelOpen'):$('panelToggle')).focus();return}
  if(!presenting)return;
  if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight')return;
  event.preventDefault();
