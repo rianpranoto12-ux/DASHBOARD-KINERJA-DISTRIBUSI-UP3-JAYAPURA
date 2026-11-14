@@ -97,3 +97,47 @@ PDKB DAN LOGISTIK
 - Pilih jenis data di Impor data. Template CSV dapat dibuka di Excel.
   Gunakan nama tab di atas jika menyimpan sebagai XLSX. Ekspor data detail
   mengikuti tab yang sedang dibuka, termasuk pilihan Stok atau ITO.
+
+MODE PAPARAN
+- Klik Mode paparan. Panel atas otomatis diciutkan hingga hanya judul.
+- Panah kiri/kanan atau usap mendatar pada area isi untuk pindah slide.
+  Usap ke kiri untuk maju dan ke kanan untuk mundur. Area tabel dan peta
+  yang perlu digulir mendatar tetap dapat digulir. Usap dari area isi lain
+  untuk berpindah slide. Gulir vertikal untuk membaca data panjang.
+- Klik judul atau tekan M untuk membuka menu dan filter. Ikon ⛶ mengaktifkan
+  layar penuh bila didukung browser. Klik Keluar paparan atau tekan Esc
+  di luar layar penuh untuk kembali ke tampilan biasa.
+- Ikon − atau M juga bisa menciutkan panel pada tampilan biasa.
+
+Panel kanan pada Ringkasan memiliki gulir vertikal tersendiri untuk grafik
+dan tabel. Pada tampilan cetak, seluruh isi panel ditampilkan.
+
+ZOOM AREA DATA
+- Gunakan − / + di kanan atas untuk mengubah ukuran data dari 50% hingga
+  150%. Klik angka persentase untuk kembali ke 100%.
+- Zoom berlaku mulai dari baris filter dan menu utama hingga isi dashboard dan tersedia di Mode Paparan.
+
+YANTEK OPTIMIZATION DAN CATATAN
+- Buka Kinerja Distribusi Detail → Yantek Optimization untuk WO selesai
+  dan SLA kualitas. Data masuk melalui Impor data → Kinerja dengan kode
+  yantek_wo dan yantek_sla. Angka mengikuti data yang diimpor.
+- Edit catatan untuk mengisi analisa, evaluasi, dan rencana mitigasi.
+  Susun rekomendasi membuat draf lokal berbasis aturan dan data indikator.
+  Catatan tersimpan di browser per unit, bulan, dan indikator.
+- Mode Paparan menampilkan Danantara di kiri dan PLN di kanan.
+  Sumber logo:
+  https://commons.wikimedia.org/wiki/File:Danantara_Indonesia.svg
+  https://commons.wikimedia.org/wiki/File:Logo_PLN.svg
+
+YO HARIAN
+- Pada tab Yantek Optimization, pilih Tren bulanan, Per ULP, atau Per petugas.
+- Impor data → YO Harian menerima Template_YO_Harian.csv atau XLSX dengan
+  tab YO_Harian. Isi periode YYYY-MM dan tanggal YYYY-MM-DD sebagai teks.
+  Gunakan satu baris per tanggal, ULP, dan ID petugas. Baris dengan kombinasi
+  yang sama memperbarui catatan tersebut setelah konfirmasi.
+- Isi skor performa, produktivitas, dan hari kerja sesuai sumber. Rekap ULP
+  menghitung rata-rata tiap skor dari nilai yang tersedia. PO dan WO adalah
+  jumlah dari petugas yang tercatat. Angka kosong berarti belum dilaporkan.
+- Per petugas mengikuti filter unit utama. Pilih UP3 untuk melihat petugas
+  semua ULP. Tabel harian mengikuti filter tanggal dan petugas yang dipilih.
+- Pada Per ULP / Per petugas, Ekspor data detail mengunduh data YO harian.
