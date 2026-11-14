@@ -45,14 +45,37 @@ main#content{flex:1;min-height:0;max-width:none;width:100%;overflow:auto;margin:
 .map-metric .status-icon{width:15px;height:15px;font-size:11px}
 
 .dashboard-jargon{display:block;margin-top:12px;padding:11px 14px;background:#e2f2ef;border-radius:8px;color:#0d514e;text-align:center;font-weight:800;font-size:clamp(15px,2vw,21px);letter-spacing:.02em}
+
+#slideControls:not([hidden]){display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:7px 0;border-top:1px solid var(--line)}
+#slideControls label{display:flex;align-items:center;gap:5px}
+#slidePicker{max-width:min(300px,70vw)}
+#slideCount{min-width:44px;text-align:center;font-variant-numeric:tabular-nums}
+#slideControls button:disabled{opacity:.48;cursor:default}
+#slideFeedback:empty{display:none}
+.presentation main#content{padding-top:14px;background:#e8f1f5}
+.presentation .panel{padding:clamp(12px,1.5vw,22px);border-top:3px solid #16877b}
+.presentation .panel h2{font-size:clamp(19px,2vw,28px);line-height:1.2}
+.presentation .panel table{font-size:clamp(12px,1.23vw,17px)}
+.presentation .panel td,.presentation .panel th{padding:clamp(6px,.75vw,11px)}
+.presentation #chart svg{max-height:37vh}
+.presentation .layout{gap:14px}
+@media print{#slideControls{display:none!important}.presentation main#content{background:white}}
 </style>
 </head><body>
 <header><strong>PLN <span>UP3 JAYAPURA</span></strong><span>Jaringan dan Konstruksi</span></header>
 <div class="dashboard-shell">
 <div class="dashboard-top">
 <section class="hero"><div><p class="label">LAPORAN KINERJA · 2026</p><h1>Kinerja Distribusi</h1><p>Target, realisasi, dan tren per unit</p></div><strong id="periodLabel"></strong></section>
-<div class="filters"><label>Unit<select id="unit"></select></label><label>Periode<select id="month"></select></label><label>Jenis grafik<select id="type"><option value="line">Garis</option><option value="bar">Batang</option><option value="dot">Titik</option></select></label><button id="import">Impor data</button><button id="export">Ekspor CSV</button><button id="print">Cetak / PDF</button></div>
+<div class="filters"><label>Unit<select id="unit"></select></label><label>Periode<select id="month"></select></label><label>Jenis grafik<select id="type"><option value="line">Garis</option><option value="bar">Batang</option><option value="dot">Titik</option></select></label><button id="import">Impor data</button><button id="export">Ekspor CSV</button><button id="present" aria-pressed="false">Mode paparan</button><button id="print">Cetak / PDF</button></div>
 <nav id="pages" aria-label="Menu dashboard"><button data-page="summary" aria-pressed="true">Ringkasan kinerja</button><button data-page="ulp" aria-pressed="false">Kinerja per ULP</button><button data-page="detail" aria-pressed="false">Kinerja Distribusi Detail</button><button data-page="map" aria-pressed="false">Peta ULP</button></nav>
+<div id="slideControls" hidden aria-label="Navigasi paparan">
+<button id="slidePrev" type="button" aria-label="Slide sebelumnya">← Sebelumnya</button>
+<label>Slide <select id="slidePicker"></select></label>
+<output id="slideCount" aria-live="polite"></output>
+<button id="slideNext" type="button" aria-label="Slide berikutnya">Berikutnya →</button>
+<button id="slideFull" type="button">Layar penuh</button>
+<span id="slideFeedback" class="muted" role="status"></span>
+</div>
 </div>
 <main id="content" tabindex="0" aria-label="Isi dashboard">
 <p id="notice" role="status"></p>
@@ -205,6 +228,7 @@ function chart(points){
  return markup+'</svg>';
 }
 function render(){
+ syncPresentation();
  const [groupTitle,items]=dataset.groups[group];
  $('groupTitle').textContent=groupTitle;
  $('periodLabel').textContent=months[month()-1]+' 2026 · '+unit();
@@ -414,7 +438,7 @@ function templateRows(kind){
 }
 $('detailBody').onclick=e=>{
  const b=e.target.closest('[data-log-view]');
- if(b){logisticsView=b.dataset.logView;renderDetail();$('detailBody').querySelector('[aria-pressed=true]')?.focus()}
+ if(b){logisticsView=b.dataset.logView;render();$('detailBody').querySelector('[aria-pressed=true]')?.focus()}
 };
 function assetValues(u,m){
  const k='2026-'+String(m).padStart(2,'0')+'|'+u;
@@ -447,7 +471,7 @@ function renderUlpMap(){
 }
 $('detailTabs').onclick=e=>{
  const b=e.target.closest('[data-detail-tab]');if(!b)return;
- detailTab=b.dataset.detailTab;renderDetail();
+ detailTab=b.dataset.detailTab;render();
  $('detailTabs').querySelector('[aria-pressed=true]')?.focus();
 };
 $('detailBody').onchange=e=>{
@@ -682,6 +706,79 @@ $('linkForm').onsubmit=e=>{
   return readImport(await response.blob(),url.pathname,kind);
  },kind);
 };
+
+const slides=[
+ ...dataset.groups.map(([label],index)=>({label,page:'summary',group:index})),
+ {label:'Kinerja per ULP',page:'ulp'},
+ ...Object.entries(detailKinds).filter(([,kind])=>kind.label).map(([key,kind])=>({label:kind.label,page:'detail',detail:key})),
+ {label:'Perputaran material (ITO)',page:'detail',detail:'stock',logistics:'ito'},
+ {label:'Peta ULP',page:'map'}
+];
+let presenting=false;
+const slidePicker=$('slidePicker');
+slidePicker.innerHTML=slides.map((slide,i)=>option(i,slide.label)).join('');
+function activeSlide(){
+ return slides.findIndex(slide=>{
+  if(slide.page!==page)return false;
+  if(page==='summary')return slide.group===group;
+  if(page==='detail')return slide.detail===detailTab&&(detailTab!=='stock'||(slide.logistics??'stock')===logisticsView);
+  return true;
+ });
+}
+function syncPresentation(){
+ if(!presenting)return;
+ const index=activeSlide();
+ slidePicker.value=String(index);
+ $('slideCount').textContent=(index+1)+' / '+slides.length;
+ $('slidePrev').disabled=index<=0;
+ $('slideNext').disabled=index>=slides.length-1;
+}
+function openSlide(index){
+ const slide=slides[index];
+ if(!slide)return;
+ if(slide.page==='summary'){
+  group=slide.group;
+  selected=dataset.groups[group][1][0][0];
+  view='trend';
+ }
+ if(slide.page==='detail'){
+  detailTab=slide.detail;
+  if(detailTab==='stock')logisticsView=slide.logistics??'stock';
+ }
+ changePage(slide.page);
+}
+function togglePresentation(){
+ presenting=!presenting;
+ document.body.classList.toggle('presentation',presenting);
+ $('slideControls').hidden=!presenting;
+ $('present').setAttribute('aria-pressed',String(presenting));
+ $('present').textContent=presenting?'Keluar paparan':'Mode paparan';
+ if(!presenting&&document.fullscreenElement)document.exitFullscreen?.().catch(()=>{});
+ if(!presenting)$('slideFeedback').textContent='';
+ syncPresentation();
+}
+$('present').onclick=togglePresentation;
+slidePicker.onchange=()=>openSlide(Number(slidePicker.value));
+$('slidePrev').onclick=()=>openSlide(activeSlide()-1);
+$('slideNext').onclick=()=>openSlide(activeSlide()+1);
+$('slideFull').onclick=async()=>{
+ const feedback=$('slideFeedback');
+ feedback.textContent='';
+ try{
+  if(document.fullscreenElement)await document.exitFullscreen();
+  else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();
+  else feedback.textContent='Layar penuh tidak tersedia di browser ini.';
+ }catch{feedback.textContent='Izin layar penuh tidak tersedia.'}
+};
+document.addEventListener('fullscreenchange',()=>{
+ $('slideFull').textContent=document.fullscreenElement?'Keluar layar penuh':'Layar penuh';
+});
+document.addEventListener('keydown',event=>{
+ if(!presenting||$('importDialog').open||event.ctrlKey||event.altKey||event.metaKey||event.shiftKey||event.target?.closest?.('input,select,textarea,[contenteditable],.scroll'))return;
+ if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight')return;
+ event.preventDefault();
+ openSlide(activeSlide()+(event.key==='ArrowLeft'?-1:1));
+});
 
 render();
 </script>
