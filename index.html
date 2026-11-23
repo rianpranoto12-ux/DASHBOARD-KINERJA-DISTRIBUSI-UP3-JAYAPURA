@@ -158,6 +158,8 @@ body.panel-collapsed .dashboard-shell{grid-template-columns:58px minmax(0,1fr)}
 
 .pdkb-trend{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:20px;font-size:11px;font-weight:750;white-space:nowrap}.pdkb-trend b{font-size:18px;line-height:1}.pdkb-trend.up{background:#e1f3e9;color:#087044}.pdkb-trend.flat{background:#fff2c4;color:#805900}.pdkb-trend.down{background:#fbe6e8;color:#b52d31}
 
+.stock-summary-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0}.stock-summary-cards h2{font-size:26px;margin:6px 0 0}@media(max-width:700px){.stock-summary-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 </style>
 </head><body>
 <header><strong>Kinerja Distribusi <span>· UP3 JAYAPURA</span></strong><span>Jaringan dan Konstruksi</span></header>
@@ -612,8 +614,10 @@ function renderPdkb(){
 }
 $('detailBody').addEventListener('change',e=>{const k=e.target.dataset.pdkbFilter;if(!k)return;if(k==='year')pdkbYear=e.target.value;if(k==='team')pdkbTeam=e.target.value;if(k==='metric')pdkbMetric=e.target.value;renderDetail()});
 const stockLocs=['DIS','AGA','TEL','UP2K PAPUA','UP2K P PEG','WAMENA','TOTAL GD UP3','ULP ABEPURA','ULP JAYAPURA','ULP SENTANI','ULP ARSO','ULP GENYEM','ULP SARMI','TOTAL GD UP3 & ULP'];
-let stockGroup='',stockClass='',stockMeasure='BH',stockLocation='',stockSearch='';
-function stockMatrixRows(){return Object.values(detailOverrides.stock).filter(r=>r.format==='matrix'&&r.periode===periodText())}
+let stockGroup='',stockClass='',stockMeasure='BH',stockLocation='',stockSearch='',stockPeriod='latest';
+function stockAvailablePeriods(){return [...new Set(Object.values(detailOverrides.stock).filter(r=>r.format==='matrix').map(r=>r.periode))].sort().reverse()}
+function stockSelectedPeriod(){return stockPeriod==='latest'?stockAvailablePeriods()[0]:stockPeriod}
+function stockMatrixRows(){return Object.values(detailOverrides.stock).filter(r=>r.format==='matrix'&&r.periode===stockSelectedPeriod())}
 function stockMatrixFiltered(){return stockMatrixRows().filter(r=>(!stockGroup||r.material===stockGroup)&&(!stockClass||r.kategori===stockClass)&&(!stockSearch||(r.kode_material+' '+r.nama_material+' '+r.material).toLowerCase().includes(stockSearch.toLowerCase())))}
 function stockSum(values){return values.every(v=>v!=null)?values.reduce((a,b)=>a+b,0):null}
 function stockReconcile(r){const a=stockSum(r.values.slice(0,6)),b=stockSum([...r.values.slice(0,6),...r.values.slice(7,13)]);return (a!=null&&r.values[6]!=null&&Math.abs(a-r.values[6])>1e-6)||(b!=null&&r.values[13]!=null&&Math.abs(b-r.values[13])>1e-6)}
@@ -625,9 +629,9 @@ function renderStockMatrix(){
  const same=rows.filter(r=>r.satuan===measure),graph=locs.map(i=>[stockLocs[i],[same.length?stockSum(same.map(r=>r.values[i])):null]]).filter(([,v])=>v[0]!=null);
  const flags=rows.filter(stockReconcile).length;
  const columns=ulp>=0?[ulp]:stockLocation?[Number(stockLocation)]:Array.from({length:14},(_,i)=>i);
- return '<h2>Logistik · Stok material · '+ehtml(unit())+'</h2><p>Posisi stok '+(all.length?ehtml([...new Set(all.map(r=>r.tanggal_stok))].sort().join(', ')):'belum tersedia untuk periode ini')+' · '+rows.length+' jenis material</p><div class="detail-filters">'+picker('group','Kelompok material',[['','Semua kelompok'],...[...new Set(all.map(r=>r.material))].map(v=>[v,v])],stockGroup)+picker('class','Kategori',[['','Semua kategori'],['MDU','MDU'],['Non-MDU','Non-MDU'],['Belum diklasifikasikan','Belum diklasifikasikan']],stockClass)+(ulp<0?picker('location','Lokasi gudang',[['','Semua lokasi'],...stockLocs.map((v,i)=>[String(i),v])],stockLocation):'')+picker('measure','Satuan grafik',measures.map(v=>[v,v]),measure)+'<label>Cari kode / deskripsi<input data-stock-filter="search" value="'+ehtml(stockSearch)+'"></label></div><p class="muted">Nama DIS, AGA, TEL, UP2K PAPUA, UP2K P PEG dan WAMENA mengikuti file sumber. Kategori MDU/non-MDU belum tersedia pada sumber. Grafik hanya menjumlahkan material bersatuan sama; total gudang tidak dihitung dua kali.</p>'+(flags?'<p class="empty">'+flags+' baris memiliki selisih antara total sumber dan penjumlahan rincian. Periksa total GD UP3 dan total gabungan.</p>':'')+(same.length?metricBars('Stok per lokasi · '+ehtml(measure),graph,[['Stok','#007b71']]):'<p class="empty">Belum ada data untuk filter ini. Pilih periode November untuk data awal 23 November 2026.</p>')+detailTable(['Material','Nomor material','Deskripsi','Kategori','Satuan',...columns.map(i=>stockLocs[i]),'Validasi total'],rows.map(r=>[r.material,r.kode_material,r.nama_material,r.kategori,r.satuan,...columns.map(i=>fmt(r.values[i])),stockReconcile(r)?'Periksa selisih':'Sesuai / data tidak lengkap']))+'<p class="muted">Nilai kosong tetap —. Total pada sumber dipertahankan; total yang kosong saat impor dihitung bila seluruh rincian tersedia. Data baru memperbarui snapshot bulan terkait.</p>';
+ return '<h2>Logistik · Stok material · '+ehtml(unit())+'</h2><p>Posisi stok '+(all.length?ehtml([...new Set(all.map(r=>r.tanggal_stok))].sort().join(', ')):'belum tersedia untuk periode ini')+' · '+rows.length+' jenis material</p><p class="muted">Periode stok: '+ehtml(stockSelectedPeriod()||'—')+' · pilihan tersendiri dari periode KPI utama '+ehtml(periodText())+'.</p><div class="detail-filters">'+picker('period','Periode stok',[['latest','Data terbaru (otomatis)'],...stockAvailablePeriods().map(v=>[v,v])],stockPeriod)+picker('group','Kelompok material',[['','Semua kelompok'],...[...new Set(all.map(r=>r.material))].map(v=>[v,v])],stockGroup)+picker('class','Kategori',[['','Semua kategori'],['MDU','MDU'],['Non-MDU','Non-MDU'],['Belum diklasifikasikan','Belum diklasifikasikan']],stockClass)+(ulp<0?picker('location','Lokasi gudang',[['','Semua lokasi'],...stockLocs.map((v,i)=>[String(i),v])],stockLocation):'')+picker('measure','Satuan grafik',measures.map(v=>[v,v]),measure)+'<label>Cari kode / deskripsi<input data-stock-filter="search" value="'+ehtml(stockSearch)+'"></label><button type="button" data-stock-reset>Reset filter</button></div><p class="muted">Nama DIS, AGA, TEL, UP2K PAPUA, UP2K P PEG dan WAMENA mengikuti file sumber. Kategori MDU/non-MDU belum tersedia pada sumber. Grafik hanya menjumlahkan material bersatuan sama; total gudang tidak dihitung dua kali.</p>'+(flags?'<p class="empty">'+flags+' baris memiliki selisih antara total sumber dan penjumlahan rincian. Periksa total GD UP3 dan total gabungan.</p>':'')+stockSummaryCharts(rows,ulp,measure)+(same.length?metricBars('Stok per lokasi · '+ehtml(measure),graph,[['Stok','#007b71']]):'<p class="empty">Belum ada material sesuai filter. Gunakan Reset filter untuk menampilkan seluruh material.</p>')+detailTable(['Material','Nomor material','Deskripsi','Kategori','Satuan',...columns.map(i=>stockLocs[i]),'Validasi total'],rows.map(r=>[r.material,r.kode_material,r.nama_material,r.kategori,r.satuan,...columns.map(i=>fmt(r.values[i])),stockReconcile(r)?'Periksa selisih':'Sesuai / data tidak lengkap']))+'<p class="muted">Nilai kosong tetap —. Total pada sumber dipertahankan; total yang kosong saat impor dihitung bila seluruh rincian tersedia. Data baru memperbarui snapshot bulan terkait.</p>';
 }
-$('detailBody').addEventListener('change',e=>{const k=e.target.dataset.stockFilter;if(!k)return;if(k==='group')stockGroup=e.target.value;if(k==='class')stockClass=e.target.value;if(k==='measure')stockMeasure=e.target.value;if(k==='location')stockLocation=e.target.value;if(k==='search')stockSearch=e.target.value;renderDetail()});
+$('detailBody').addEventListener('change',e=>{const k=e.target.dataset.stockFilter;if(!k)return;if(k==='period')stockPeriod=e.target.value;if(k==='group')stockGroup=e.target.value;if(k==='class')stockClass=e.target.value;if(k==='measure')stockMeasure=e.target.value;if(k==='location')stockLocation=e.target.value;if(k==='search')stockSearch=e.target.value;renderDetail()});
 function stockMatrixTemplate(blank){const current=stockMatrixRows();const rows=current.length||!blank?current:Object.values(stockMatrixBase);return [['tanggal_stok','kategori','MATERIAL','NOMOR MATERIAL','DESKRIPSI MATERIAL','SATUAN',...stockLocs],...rows.map(r=>[r.tanggal_stok,r.kategori,r.material,r.kode_material,r.nama_material,r.satuan,...r.values.map(v=>blank?'':v??'')])];}
 function decodeStockMatrix(rows){
  const normalize=v=>String(v??'').replace(/\s+/g,' ').trim().toUpperCase();
@@ -1556,6 +1560,19 @@ function pdkbComparisonTable(rows,year=null,satuan=''){
  return '<div class="scroll"><table><thead><tr>'+headings.map(h=>'<th scope="col">'+ehtml(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr><th scope="row">'+ehtml(r.label)+'</th>'+(year?'<td>'+fmt(r.target)+'</td><td>'+(r.pct==null?'—':fmt(r.pct)+'%')+'</td>':'')+'<td>'+fmt(r.a)+'</td><td>'+fmt(r.b)+'</td><td>'+pdkbTrend(r.a,r.b)+'</td></tr>').join('')+'</tbody></table></div>';
 }
 
+
+function stockSummaryCharts(rows,ulp,measure){
+ const col=ulp>=0?ulp:stockLocation?Number(stockLocation):13;
+ const available=rows.filter(r=>r.values[col]!=null&&r.values[col]>0).length;
+ const empty=rows.filter(r=>r.values[col]===0).length,unknown=rows.length-available-empty;
+ const cards=[['Jenis material',rows.length],['Stok tersedia',available],['Stok kosong',empty],['Belum ada angka',unknown]].map(([label,n])=>'<div class="panel"><span class="muted">'+label+'</span><h2>'+fmt(n)+'</h2></div>').join('');
+ const groups=new Map(),quantities=new Map();
+ for(const r of rows){groups.set(r.material,(groups.get(r.material)||0)+1);if(r.satuan===measure){const vals=quantities.get(r.material)||[];vals.push(r.values[col]);quantities.set(r.material,vals)}}
+ const sort=(a,b)=>(b[1][0]??0)-(a[1][0]??0);
+ const qty=[...quantities].map(([k,v])=>[k,[stockSum(v)]]).filter(([,v])=>v[0]!=null).sort(sort);
+ return '<div class="stock-summary-cards">'+cards+'</div><p class="muted">Ringkasan '+ehtml(stockLocs[col])+' · jumlah jenis material, bukan penjumlahan satuan berbeda.</p><div class="detail-grid">'+metricBars('Jenis material per kelompok',[...groups].map(([k,v])=>[k,[v]]).sort(sort),[['Jenis material','#527795']])+(qty.length?metricBars('Jumlah stok per kelompok · '+ehtml(measure),qty,[['Stok','#007b71']]):'<p>Belum ada data untuk satuan grafik ini.</p>')+'</div>';
+}
+$('detailBody').addEventListener('click',e=>{if(!e.target.closest('[data-stock-reset]'))return;stockGroup='';stockClass='';stockLocation='';stockSearch='';stockMeasure='BH';renderDetail()});
 
 </script>
 </body></html>
