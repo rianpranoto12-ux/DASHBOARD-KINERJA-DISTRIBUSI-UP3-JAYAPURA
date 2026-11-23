@@ -1,0 +1,64 @@
+BLTH,Gardu Rusak,ULP,Kapasitas (KVA),Merk,Penyebab,Tahun
+23/04/2025,ABE010,ABEPURA,200,B&D,1. Unbalance >25%,2025
+07/03/2025,ABE197,ABEPURA,100,STARLITE,1. Tahanan Isolasi Rendah,2025
+30/01/2025,ABE200,ABEPURA,200,VOLTRA,"1. Baut fasa T rusak
+ 2. tahanan isolasi rendah 
+ 3. beban overload",2025
+11/06/2025,ABE209,ABEPURA,200,B&D,"1. Minyak Trafo Rembes
+ 2. Overload
+ 3. Underload",2025
+19/04/2025,ABE421,ABEPURA,100,B&D,1. Minyak Trafo rembes karena packing retak karena adanya reposisi LA,2025
+14/05/2025,ARB007,SARMI,100,B&D,"1. Oli Rembes
+ 2. Trafo mengembung
+ 3. Trafo Short",2025
+20/01/2025,ARS051,ARSO,200,STARLITE,"1. Kebocoran minyak trafo karena packing retak/rembes netes pada bushing TR
+ 2. pembebanan yang tidak seimbang (diatas 20%) terjadi di fasa R, T
+ 3. Trafo Over Load (diatas 68%)
+ 4. pembumian trafo kurang baik diatas 5 ohm",2025
+10/03/2025,ARS066,ARSO,50,TRAFINDO,"1. Umur Trafo 16 tahun
+ 2. Pembumian trafo lebih 5 ohm
+ 3, Grounding netral tidak dipasang
+ 4. Pembebanan trafo tidak seimbang (diatas 20%) di fasa R,T",2025
+08/07/2025,ARS067,ARSO,100,B&D,1. Unbalance,2025
+05/04/2025,ARS180,ARSO,50,MASTERGREEN ELEC,"1. Grounding Netral tidak dipasang
+ 2. Pembumian >5 ohm
+ 5. bekas rembesan oli pada keran trafo",2025
+27/07/2025,GYM003,GENYEM,100,WELTRAF,1. Minyak Trafo Rembes,2025
+11/02/2025,GYM007,GENYEM,100,MORAWA,"1. Sambaran petir 
+ 2. umur trafo lebih dari usia peralatan",2025
+06/03/2025,JPR077,JAYAPURA,630,STARLITE,"1. Kebocoran Minyak trafo
+ 2. Usia Trafo
+ 3. Tahanan Insulasi",2025
+02/03/2025,JPR096,JAYAPURA,200,TRAFINDO,"1. Trafo merupakan trafo bekas
+ 2. kebocoran minyak trafo 
+ 3. terdapat short pada handle
+ 4. mobilisasi trafo yang tidak safety",2025
+07/02/2025,JPR126,JAYAPURA,50,SINTRA,"1. Umur trafo yang sudah 20 tahun 
+ 2. Tahanan isolasi tidak sesuai standar",2025
+01/04/2025,JPR417,JAYAPURA,100,B&D,"1. Terdapat tahanan isolasi Fasa Primer (RS, ST = 9 GOHM
+ 2. Bushing fasa T retak",2025
+22/04/2025,SRM081,SARMI,50,TRAFINDO,1. Minyak trafo rembes,2025
+21/08/2025,STN055,SENTANI,200,B&D,1. Minyak Trafo Rembes,2025
+28/05/2025,STN100,SENTANI,250,Schneider,"1. Minyak Rembes
+ 2. Tidak dilakukan pengukuran gardu",2025
+08/07/2025,STN142,SENTANI,160,STARLITE,"1. Minyak trafo rembes
+2. Grounding Tidak ada",2025
+30/04/2025,STN301,SENTANI,100,B&D,1. Minyak Rembes,2025
+18/07/2025,ABE156,ABEPURA,100,UNINDO,1. Beban Unbalance,2025
+04/10/2025,JPR360,JAYAPURA,50,STARLITE,1. Beban Unbalance,2025
+08/10/2025,PTM002,SARMI,50,HERMETIK,1. Minyak trafo rembes,2025
+28/09/2025,ABE205,ABEPURA,200,STARLITE,1. Minyak trafo rembes,2025
+15/11/2025,ABE229,ABEPURA,250,B&D,"1. Umur Trafo
+2. Unbalance >25%",2025
+15/11/2025,ARS059,ARSO,100,TRAFINDO,1. Short pada Belitan Trafo,2025
+10/01/2026,JPR185,JAYAPURA,250,B&D,Overload,2026
+07/01/2026,ABE078,ABEPURA,100,B&D,Beban Unbalance,2026
+22/03/2026,JPR102,JAYAPURA,160,UNINDO,Bushing Pecah,2026
+29/03/2026,GYM012,GENYEM,100,KALTRA,Minyak trafo rembes,2026
+10/03/2026,ABE017,ABEPURA,160,B&D,Tahanan Isolasi tidak Standar,2026
+10/03/2026,ABE050,ABEPURA,400,B&D,Minyak trafo rembes,2026
+16/03/2026,ABE170,ABEPURA,200,B&D,Minyak trafo rembes,2026
+16/04/2026,GYM 002,GENYEM,200,B&D,Tersambar Petir,2026
+29/07/2026,ABE128,ABEPURA,200,-,,2026
+29/07/2026,JPR059 (RETROVIT) ,JAYAPURA,,,,2026
+26/07/2026,JPR068,JAYAPURA,,,,2026
