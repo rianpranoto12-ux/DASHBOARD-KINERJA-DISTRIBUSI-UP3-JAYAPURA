@@ -42,3 +42,147 @@ main#content{flex:1;min-height:0;max-width:none;width:100%;overflow:auto;margin:
 .map-metric .status-icon{width:15px;height:15px;font-size:11px}
 
 .dashboard-jargon{display:block;margin-top:12px;padding:11px 14px;background:#e2f2ef;border-radius:8px;color:#0d514e;text-align:center;font-weight:800;font-size:clamp(15px,2vw,21px);letter-spacing:.02em}
+
+.presentation main#content{padding-top:14px;background:#e8f1f5}
+.presentation .panel{padding:clamp(12px,1.5vw,22px);border-top:3px solid #16877b}
+.presentation .panel h2{font-size:clamp(19px,2vw,28px);line-height:1.2}
+.presentation .panel table{font-size:clamp(12px,1.23vw,17px)}
+.presentation .panel td,.presentation .panel th{padding:clamp(6px,.75vw,11px)}
+.presentation #chart svg{max-height:37vh}
+.presentation .layout{gap:14px}
+
+.panel-bar{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:4px 0}
+body.panel-collapsed>header,.panel-collapsed #panelToggle{display:none}
+.panel-collapsed .dashboard-top{padding-top:0}
+#compactTitle{margin:0;font-size:clamp(13px,1.2vw,18px);line-height:1.25}
+#panelOpen{font:inherit;font-weight:750;background:transparent;border-color:transparent;padding:3px 0}
+#panelOpen:hover{text-decoration:underline}
+
+#panelExpanded .hero{position:relative;padding-right:52px}
+#panelToggle{position:absolute;top:7px;right:8px;display:grid;place-items:center;width:32px;height:32px;padding:0;border:1px solid #ffffff80;background:#ffffff1a;color:white;font-size:23px;line-height:1}
+#panelToggle:hover{background:#ffffff35}
+
+
+@media print{#panelToggle,#slideFull{display:none!important}.presentation main#content{background:white}}
+
+#summaryDetail{
+ min-width:0;
+ height:var(--summary-detail-height,75vh);
+ overflow-y:auto;
+ overscroll-behavior-y:contain;
+ scrollbar-gutter:stable;
+}
+#summaryDetail:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+@media(max-width:960px){
+ #summaryDetail{overscroll-behavior-y:auto}
+}
+@media print{
+ #summaryDetail{height:auto;overflow:visible;scrollbar-gutter:auto}
+}
+
+#zoomControls{display:flex;gap:4px;margin-inline-start:auto}
+#zoomControls button{min-width:32px;min-height:30px}
+#zoomReset{min-width:57px!important;font-variant-numeric:tabular-nums}
+#zoomControls button:disabled{opacity:.45;cursor:default}
+@media print{#zoomControls{display:none}#zoomNavigation,#dataCanvas{zoom:1!important}}
+
+
+#panelExpanded .hero{padding-right:16px;padding-top:36px}
+#heroTools{position:absolute;top:6px;right:8px;display:flex;align-items:center;gap:5px}
+#compactTools{margin-inline-start:auto}
+#zoomControls{gap:2px;margin:0}
+#zoomControls button{min-width:24px;min-height:24px;padding:2px 4px;font-size:11px;line-height:1.2;background:transparent;border-color:#7893a466;color:inherit}
+#zoomReset{min-width:40px!important}
+#heroTools #zoomControls button{border-color:#ffffff55}
+#zoomControls button:hover:not(:disabled){background:#7893a422}
+#heroTools #panelToggle{position:static;width:25px;height:24px;font-size:19px}
+.panel-bar:has(#compactTitle[hidden]){display:none}
+@media print{#heroTools,#compactTools{display:none}}
+
+#presentationBrand:not([hidden]){display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 10px;background:white;border-bottom:1px solid var(--line);border-radius:8px}
+#presentationBrand img{width:auto;height:clamp(15px,2.1vw,28px);max-width:35%;object-fit:contain}
+#presentationBrand span{font-weight:750;letter-spacing:.07em;font-size:clamp(9px,1.1vw,14px);text-align:center}
+.notes-box{margin-top:14px;padding:10px;border:1px solid var(--line);border-radius:9px;background:#f8fbfc}
+.notes-box h3{margin:0;font-size:14px}
+.notes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:8px}
+.notes-grid>div{padding:8px;border:1px solid var(--line);border-radius:6px;background:white}
+.notes-grid p{margin:5px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+#noteForm textarea{display:block;resize:vertical;width:100%;font:inherit;border:1px solid #bdced9;border-radius:7px;padding:7px}
+#noteForm label{margin-bottom:8px}
+@media print{.notes-box button{display:none}}
+
+.fg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr));gap:9px}
+.fg-card{padding:8px;border:1px solid var(--line);border-radius:8px;background:#f8fbfc;min-width:0;break-inside:avoid}
+.fg-card h3,.fg-card p{margin:2px 0}
+.fg-card svg{min-width:0;width:100%}
+.fg-count{font-weight:700;paint-order:stroke;stroke:#fff;stroke-width:2px;pointer-events:none}
+
+.hi-legend{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.hi-legend span{border:1px solid var(--line);border-left:4px solid var(--hi-color);border-radius:5px;background:white;padding:4px 8px}
+.hi-map-row{border-left:3px solid var(--hi-color);padding-left:5px}
+
+.hi-charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px;margin:12px 0}
+.hi-feeder-scroll{max-height:62vh;overflow:auto}
+.fg-bar-chart{padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.fg-bar-chart h3{margin:0 0 8px}
+.fg-bar-row{display:grid;grid-template-columns:minmax(90px,38%) minmax(0,1fr);gap:7px;padding:4px 0;border-top:1px solid #eef4f7}
+.fg-bar-name{font-size:12px;overflow-wrap:anywhere}
+.fg-bar-line{display:flex;align-items:center;gap:4px;padding-right:30px;font-size:11px;min-height:14px}
+.fg-bar-fill{height:8px;border-radius:3px;flex:none}
+
+/* Sidebar utama: gulir mandiri dan rel ringkas */
+body>header{display:flex!important;min-height:38px;align-items:center}
+.dashboard-shell{display:grid;grid-template-columns:260px minmax(0,1fr);grid-template-rows:minmax(0,1fr);overflow:hidden;gap:0}
+.dashboard-top{min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;border-bottom:0;border-right:1px solid var(--line);padding:10px;background:#e6eff3;scrollbar-gutter:stable}
+#panelExpanded .hero{padding:40px 12px 12px;display:block;border-radius:10px}
+.hero h1{font-size:23px}.hero #periodLabel{display:block;font-size:11px;margin-top:10px}
+#zoomNavigation .filters,#pages{display:flex;flex-direction:column;align-items:stretch;gap:8px;margin:12px 0}
+#zoomNavigation .filters label{width:100%;font-size:12px}
+#zoomNavigation select,#zoomNavigation button{width:100%;max-width:none;min-width:0;text-align:left;padding:9px 10px}
+#pages{padding-top:12px;border-top:1px solid #bdced9}
+#pages button{position:relative;padding-left:14px;line-height:1.4}
+#pages button[aria-pressed=true]{box-shadow:inset 3px 0 #32c8b2}
+main#content{width:auto;min-width:0;grid-column:2;grid-row:1;padding:12px 16px 20px}
+body.panel-collapsed .dashboard-shell{grid-template-columns:58px minmax(0,1fr)}
+.panel-collapsed .dashboard-top{padding:8px 5px}
+.panel-collapsed .panel-bar{display:flex;flex-direction:column;align-items:center;gap:12px;padding:0}
+#panelOpen{display:grid;place-items:center;width:34px;height:34px;border:1px solid #bdced9;background:white;border-radius:8px;font-size:19px;padding:0}
+#compactTools{margin:0}.panel-collapsed #zoomControls{flex-direction:column;align-items:center;gap:5px}
+.panel-collapsed #zoomControls button{width:36px;min-height:27px}
+#presentationBrand{flex:none;width:100%;padding:6px 20px;background:white;border-bottom:1px solid var(--line)}
+@media(max-width:700px){.dashboard-shell{grid-template-columns:210px minmax(0,1fr)}.dashboard-top{padding:7px}.hero h1{font-size:19px}main#content{padding:8px}.dashboard-shell .layout{grid-template-columns:1fr}}
+@media print{.dashboard-shell{display:block!important}.dashboard-top{display:none!important}main#content{width:100%;overflow:visible}.presentation #presentationBrand{display:flex!important}}
+
+.pdkb-trend{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:20px;font-size:11px;font-weight:750;white-space:nowrap}.pdkb-trend b{font-size:18px;line-height:1}.pdkb-trend.up{background:#e1f3e9;color:#087044}.pdkb-trend.flat{background:#fff2c4;color:#805900}.pdkb-trend.down{background:#fbe6e8;color:#b52d31}
+
+.stock-summary-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0}.stock-summary-cards h2{font-size:26px;margin:6px 0 0}@media(max-width:700px){.stock-summary-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.trafo-pie-legend{list-style:none;padding:0;margin:12px 0}.trafo-pie-legend li{display:flex;align-items:center;gap:7px;padding:5px 0;font-size:12px}.trafo-pie-legend li>span{width:11px;height:11px;border-radius:3px;flex:none}.trafo-pie-legend b{margin-left:auto;white-space:nowrap}
+
+#syncDialog{width:min(1000px,96vw);max-height:92vh;overflow:auto}#syncDialog input:not([type=checkbox]){font:inherit;border:1px solid #bdced9;border-radius:6px;padding:7px;width:100%;min-width:150px}#syncDialog td{white-space:normal}#syncSheetRows td:last-child{min-width:160px}#syncFeedback{padding:10px;background:#e7f4f3;border-radius:8px}
+
+/* Kelompok aksi dapat diminimalkan tanpa menutup filter atau menu utama. */
+#dashboardActions{width:100%;border-top:1px solid #c7d8e1;padding-top:8px;margin-top:3px}
+#dashboardActions>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;list-style:none;padding:4px 1px;color:var(--muted);font-size:12px;font-weight:650}
+#dashboardActions>summary::-webkit-details-marker{display:none}
+#dashboardActions>summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+#dashboardActions .actions-symbol{display:grid;place-items:center;flex:none;width:24px;height:24px;border:1px solid #bdced9;border-radius:6px;background:#fff;color:var(--ink);font-size:18px;line-height:1}
+#dashboardActions .actions-symbol::before{content:'+'}
+#dashboardActions[open] .actions-symbol::before{content:'−'}
+#dashboardActionButtons{display:flex;flex-direction:column;gap:8px;padding-top:6px}
+#dashboardActions:not([open])>#dashboardActionButtons{display:none}
+@media print{#dashboardActions{display:none!important}}
+
+/* Identitas Distribusi di kiri atas, di samping Jaringan & Konstruksi. */
+body>header{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px;padding-top:6px;padding-bottom:6px}
+.header-brand{display:flex;align-items:center;gap:10px;min-width:0}
+.header-brand img{display:block;width:54px;height:54px;flex:none;object-fit:contain;background:#fff;border-radius:8px;padding:2px}
+.header-brand>span{color:#d6edf0;font-weight:600;line-height:1.35;font-size:12px}
+body>header>strong{text-align:center}
+@media(max-width:800px){body>header{grid-template-columns:auto minmax(0,1fr)}body>header>strong{text-align:right;font-size:12px}.header-brand>span{font-size:11px}}
+@media(max-width:480px){.header-brand>span{display:none}.header-brand img{width:44px;height:44px}body>header>strong{letter-spacing:0}}
+
+/* Logo transparan, ukuran lebih ringkas. */
+.header-brand img{width:36px;height:36px;background:transparent;border-radius:0;padding:0}
+.header-brand{gap:8px}
+@media(max-width:480px){.header-brand img{width:30px;height:30px}}
