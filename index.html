@@ -164,6 +164,18 @@ body.panel-collapsed .dashboard-shell{grid-template-columns:58px minmax(0,1fr)}
 
 #syncDialog{width:min(1000px,96vw);max-height:92vh;overflow:auto}#syncDialog input:not([type=checkbox]){font:inherit;border:1px solid #bdced9;border-radius:6px;padding:7px;width:100%;min-width:150px}#syncDialog td{white-space:normal}#syncSheetRows td:last-child{min-width:160px}#syncFeedback{padding:10px;background:#e7f4f3;border-radius:8px}
 
+/* Kelompok aksi dapat diminimalkan tanpa menutup filter atau menu utama. */
+#dashboardActions{width:100%;border-top:1px solid #c7d8e1;padding-top:8px;margin-top:3px}
+#dashboardActions>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;list-style:none;padding:4px 1px;color:var(--muted);font-size:12px;font-weight:650}
+#dashboardActions>summary::-webkit-details-marker{display:none}
+#dashboardActions>summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+#dashboardActions .actions-symbol{display:grid;place-items:center;flex:none;width:24px;height:24px;border:1px solid #bdced9;border-radius:6px;background:#fff;color:var(--ink);font-size:18px;line-height:1}
+#dashboardActions .actions-symbol::before{content:'+'}
+#dashboardActions[open] .actions-symbol::before{content:'−'}
+#dashboardActionButtons{display:flex;flex-direction:column;gap:8px;padding-top:6px}
+#dashboardActions:not([open])>#dashboardActionButtons{display:none}
+@media print{#dashboardActions{display:none!important}}
+
 </style>
 </head><body>
 <header><strong>Kinerja Distribusi <span>· UP3 JAYAPURA</span></strong><span>Jaringan dan Konstruksi</span></header>
@@ -177,7 +189,7 @@ body.panel-collapsed .dashboard-shell{grid-template-columns:58px minmax(0,1fr)}
 <button id="zoomReset" type="button" aria-label="Kembalikan zoom ke 100%" title="Reset zoom ke 100%">100%</button>
 <button id="zoomIn" type="button" aria-label="Perbesar data" title="Perbesar data">+</button>
 </div><button id="panelToggle" type="button" aria-controls="panelExpanded" aria-expanded="true" aria-label="Minimize menu kiri" title="Minimize menu kiri (M)">−</button></div></section>
-<div id="zoomNavigation"><div class="filters"><label>Unit<select id="unit"></select></label><label>Periode<select id="month"></select></label><label>Jenis grafik<select id="type"><option value="line">Garis</option><option value="bar">Batang</option><option value="dot">Titik</option></select></label><button id="import">Impor data</button><button id="syncOpen" type="button">Satu Spreadsheet</button><button id="export">Ekspor CSV</button><button id="present" aria-pressed="false">Mode paparan</button><button id="slideFull" type="button" aria-label="Layar penuh" title="Layar penuh" hidden>⛶</button><button id="print">Cetak / PDF</button></div>
+<div id="zoomNavigation"><div class="filters"><label>Unit<select id="unit"></select></label><label>Periode<select id="month"></select></label><label>Jenis grafik<select id="type"><option value="line">Garis</option><option value="bar">Batang</option><option value="dot">Titik</option></select></label><details id="dashboardActions" open><summary title="Minimize / buka alat dashboard"><span>Alat dashboard</span><span class="actions-symbol" aria-hidden="true"></span></summary><div id="dashboardActionButtons"><button id="import">Impor data</button><button id="syncOpen" type="button">Satu Spreadsheet</button><button id="export">Ekspor CSV</button><button id="present" aria-pressed="false">Mode paparan</button><button id="slideFull" type="button" aria-label="Layar penuh" title="Layar penuh" hidden>⛶</button><button id="print">Cetak / PDF</button></div></details></div>
 <nav id="pages" aria-label="Menu dashboard"><button data-page="summary" aria-pressed="true">Ringkasan kinerja</button><button data-page="ulp" aria-pressed="false">Kinerja per ULP</button><button data-page="detail" aria-pressed="false">Kinerja Distribusi Detail</button><button data-page="map" aria-pressed="false">Peta ULP</button></nav></div></div>
 <div class="panel-bar">
 <h1 id="compactTitle" hidden><button id="panelOpen" type="button" aria-controls="panelExpanded" aria-expanded="false" aria-label="Buka menu kiri" title="Buka menu kiri (M)">☰</button></h1>
@@ -1673,6 +1685,10 @@ function trafoCausePies(rows){
  };
  return '<h3>Diagram pie kategori penyebab</h3><div class="detail-grid">'+pie(2025)+pie(2026)+'</div>';
 }
+
+// Preferensi ini terpisah dari minimize sidebar utama.
+try{if(localStorage.getItem('up3-dashboard-actions-collapsed')==='1')$('dashboardActions').open=false}catch{}
+$('dashboardActions').addEventListener('toggle',()=>{try{localStorage.setItem('up3-dashboard-actions-collapsed',$('dashboardActions').open?'0':'1')}catch{}});
 
 </script>
 <script id="spreadsheet-sync">
